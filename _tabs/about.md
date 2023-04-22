@@ -37,11 +37,6 @@ I am a cyber security researcher focusing primarily on network and endpoint secu
 
 ---
 
- | CTF |PROFILE|
- |--|--|
- |**HackTheBox**|<img src="http://www.hackthebox.eu/badge/image/599364" alt="Hack The Box"> |
- |**TryHackMe**|<img src="https://tryhackme-badges.s3.amazonaws.com/PYmaster.png" alt="TryHackMe">|
-
-
+ 
 
 
