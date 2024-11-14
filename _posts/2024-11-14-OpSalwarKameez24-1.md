@@ -14,7 +14,7 @@ image:
 ---
 # HTB Sherlock: OpSalwarKameez24-1: Super-Star
 
-![[black.png]]
+![[../assets/img/black.png]]
 
 ## Background
 
@@ -50,7 +50,7 @@ To solve this challenge, I’ll need to answer the following 9 questions:
 
 The download has two files in it:
 
-![[001.png]]
+![[../assets/img/001.png]]
 
 ## Analysis
 
@@ -64,25 +64,25 @@ Got the MD5 hash of this file
 
 Later, when this file is analysed in VirusTotal, it shows a very low count of detections for malicious.
 
-![[003.png]]
+![[../assets/img/003.png]]
 
 In the **Detail** tab of VirusTotal, under **Basic Properties**, you can identify that a file was created with **NSIS** (Nullsoft Scriptable Install System) by looking for specific indicators.
 
-![[004.png]]
+![[../assets/img/004.png]]
 
 A **Nullsoft Installer Self-Extracting Archive** refers to an executable file created using the **Nullsoft Scriptable Install System (NSIS)**, an open-source tool originally developed by Nullsoft (the creators of Winamp) for packaging and distributing software applications on Windows. NSIS enables developers to bundle their application files along with any necessary resources, configuration settings, and installation instructions into a single installer. When executed, this self-extracting archive automatically unpacks its contents and initiates the installation process, without requiring an external decompression tool like WinZip or 7-Zip.
 
 And we can identify this using the `die` tool.
 
-![[005.png]]
+![[../assets/img/005.png]]
 
 Then `Electron-Coupon.exe` this file was extracted using 7zip. Then the following files were found there.
 
-![[006.png]]
+![[../assets/img/006.png]]
 
 Within the extracted files, another `.7z` file was found. This file was further extracted using 7-Zip, revealing the following files and folders:.
 
-![[008.png]]
+![[../assets/img/008.png]]
 
 Based on the extracted files, this appears to be an **Electron-based application**. Here are some indicators:
 
@@ -99,27 +99,27 @@ These file types and libraries suggest this is likely an Electron app packaged w
 
 After `Electron-Coupon.exe` is executed, the file self-extracts and a file named `coupon.exe` starts to execute. That process can be identified by checking the behavior of Electron-Coupon.exe file in Virustotal. 
 
-![[009.png]]
+![[../assets/img/009.png]]
 
 This file can be viewed in the list of files extracted in the Electron-Coupon.exe application.
 
-![[010.png]]
+![[../assets/img/010.png]]
 
 I found out that this is a JavaScript base application using die tool.
 
-![[012.png]]
+![[../assets/img/012.png]]
 
 The main application code is located in `resources\app.asar`:
 
-![[013.png]]
+![[../assets/img/013.png]]
 
 You can unpack it in different ways, but I will do it using the [Asar7z](https://www.tc4shell.com/en/7zip/asar/) plugin. To do this, install the plugins in the Formats folder in the` 7-Zip` installation directory:
 
-![[015.png]]
+![[../assets/img/015.png]]
 
 After that we will get the unpacked files from the `asar` file:
 
-![[014.png]]
+![[../assets/img/014.png]]
 
 When launched, the program loads `extraResources/preload.js:`
 
@@ -205,8 +205,8 @@ if ("WebSocket" in window)
 
 To answer the question about the `XOR` decryption key, we need to open the attached PCAP file in Wireshark and set the filter to http:
 
-![[017.png]]
-![[018.png]]
+![[../assets/img/017.png]]
+![[../assets/img/018.png]]
 
 The answer to question #4 is `ec1ee034ec1ee034​`.
 
@@ -258,14 +258,14 @@ http.get(options, function(res) {
 };
 ```
 
-![[019.png]]
+![[../assets/img/019.png]]
 
 This allows us to answer question #5 — `15.206.13.31, 4444, cmd.exe`. Very similar to a reverse shell.
 
 Let's set the filter `ip.src == 15.206.13.31` in Wireshark and find the first two commands that the attacker executed after receiving the shell:
 
-![[020.png]]
-![[021.png]]
+![[../assets/img/020.png]]
+![[../assets/img/021.png]]
 
 The answer to question #6 is `whoami, ipconfig`.
 
@@ -378,7 +378,7 @@ function func_unknown_000001EA02BDD9D1(a0, a1, a2, a3, a4)
 
 To answer question #9, you will have to take the contents of register `r15`, remove the commas and send it to CyberChef — `COUPON1337:`
 
-![[022.png]]
+![[../assets/img/022.png]]
 ## Question Answers
 
 1. What is the process name of malicious NodeJS application?
