@@ -12,9 +12,6 @@ image:
   alt: OpSalwarKameez24-1 sherlock
 
 ---
-# HTB Sherlock: OpSalwarKameez24-1: Super-Star
-
-<img src="/assets/img/black.png" alt="" />
 
 ## Background
 
@@ -46,6 +43,7 @@ To solve this challenge, I’ll need to answer the following 9 questions:
 7. Which Node.js module and its associated function is the attacker using to execute the shellcode within V8 Virtual Machine contexts?
 8. Decompile the bytecode file included in the package and identify the Win32 API used to execute the shellcode.
 9. Submit the fake discount coupon that the attacker intended to present to the victim.
+
 ### Artifacts
 
 The download has two files in it:
@@ -275,14 +273,14 @@ To answer the last two questions, we need the [View8](https://github.com/suleram
 
 To decompile the V8 JSC file, we need to find out the NodeJS version using `VersionDetector.exe`:
 
-```cmd
+```bash
 > VersionDetector.exe -f script.jsc
 9.4.146.26
 ```
 
 Let's install Python, create a virtual environment and install the missing library:
 
-```cmd
+```bash
 > python -m venv env
 > env\scripts\activate
 > pip install parse
@@ -290,7 +288,7 @@ Let's install Python, create a virtual environment and install the missing libra
 
 Let's run decompilation:
 
-```cmd
+```bash
 > python view8.py --path "bin\9.4.146.24.exe" script.jsc output.js
 Executing disassembler binary: bin\9.4.146.24.exe.
 Disassembly completed successfully.
@@ -379,6 +377,7 @@ function func_unknown_000001EA02BDD9D1(a0, a1, a2, a3, a4)
 To answer question #9, you will have to take the contents of register `r15`, remove the commas and send it to CyberChef — `COUPON1337:`
 
 <img src="/assets/img/022.png" alt="" />
+
 ## Question Answers
 
 1. What is the process name of malicious NodeJS application?
