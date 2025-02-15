@@ -26,17 +26,17 @@ Now, in the screenshot below, you’ll see the MBR section of the disk (the firs
 
 For our task, we’ll focus on the hexadecimal bytes, decoding them to understand what they mean. Don’t worry—it’s easier than it sounds once you get the hang of it!
 
-![[../assets/img/M1.png]]
+<img src="/assets/img/M1.png" alt="" />
 
 Before we dive into analyzing the bytes, let’s get one thing clear—every two hexadecimal digits represent one byte. Simple enough, right? So, when we talk about the `512 `bytes that make up the MBR, they’re actually divided into three distinct portions.
 
 In the screenshot below, you’ll see how each portion of the MBR is highlighted in different colors to make it easier to understand. Breaking it down like this helps us focus on what each section does and what to look for during the analysis.
 
-![[../assets/img/M2.png]]
+<img src="/assets/img/M2.png" alt="" />
 
 The MBR is divided into three main sections,
 
-![[../assets/img/M3.png]]
+<img src="/assets/img/M3.png" alt="" />
 
 Let's dissect each of the three portions of the MBR.
 
@@ -46,7 +46,7 @@ The first part of the Master Boot Record (MBR) is the Bootloader code. This sect
 
 You can see the Bootloader code in the screenshot below,
 
-![[../assets/img/M4.png]]
+<img src="/assets/img/M4.png" alt="" />
 
 This Bootloader code contains something called the Initial Bootloader. It’s the first thing that runs when the MBR is executed. Its main job? **Find the bootable partition** by checking the partition table in the MBR. Once it finds the right partition, it passes control to the operating system’s bootloader so your system can start up smoothly.
 
@@ -62,19 +62,19 @@ Now, here’s the cool part for forensic analysts: the partition table can revea
 
 An MBR disk can have up to **4 partitions**, and each partition is represented by 16 bytes in the table. In the screenshot below, you’ll see that each partition is highlighted with a different color, making it easy to tell them apart.
 
-![[../assets/img/M5.png]]
+<img src="/assets/img/M5.png" alt="" />
 
 To help you understand this better, we’ve also included a screenshot from the Disk Management utility in Windows. This tool gives you a visual representation of the disk and its partitions. You’ll notice the same four partitions listed here that we saw earlier in the partition table.
 
 By comparing these two views—the hex editor and the Disk Management utility—you can see how the partition details match up. This makes it easier to identify each partition and confirm that everything is in order—or spot anything unusual if something’s been tampered with.
 
-![[../assets/img/M6.png]]
+<img src="/assets/img/M6.png" alt="" />
 
 Unlike the bootloader code, the hexadecimal digits in the partition table are full of useful information. Every byte (or group of bytes) represents something specific about the partition. This data can tell us things like **where the partition starts**, **what type it is**, and **how big it is**.
 
 To make this easier to understand, let’s take the first partition from the partition table as an example. In the screenshot below, you’ll see this partition highlighted with different colors. Each color represents a different field. Some fields are just one byte, while others are made up of multiple bytes that work together to form a larger piece of information.
 
-![[../assets/img/M7.png]]
+<img src="/assets/img/M7.png" alt="" />
 
 The table below shows the fields represented by these bytes. 
 
@@ -154,7 +154,7 @@ If you’re using HxD, just select the bytes you want to convert, and check the 
 
 Once you have that decimal value, you can use it to locate the exact sector in the hex editor and start analyzing the partition’s contents!
 
-![[../assets/img/M8.png]]
+<img src="/assets/img/M8.png" alt="" />
 
 Now that we’ve converted the Starting LBA Address to a decimal value, we have `2048`. The next step is to figure out the exact location of the partition by multiplying it by the sector size, which is `512` bytes.
 
@@ -164,11 +164,11 @@ Here’s the math:
 
 This means the partition starts at byte `1,048,576` on the disk. The last step is to search for this value in the HxD tool to jump to the start of this partition. To search this value, first click the Search button and then click the Go to option.
 
-![[../assets/img/M9.png]]
+<img src="/assets/img/M9.png" alt="" />
 
 Now, input the value in the prompt, select the decimal format (dec) and click the OK button.
 
-![[../assets/img/M10.png]]
+<img src="/assets/img/M10.png" alt="" />
 
 Once you’ve jumped to the starting LBA in the hex editor, you’ll land right at the start of the partition on the disk. This is where the real fun begins! You can now carry out detailed forensic analysis of this specific partition.
 
@@ -178,13 +178,13 @@ This technique is especially useful for recovering hidden or deleted data that h
 
 The last four bytes in the partition table represent the Number of Sectors field. 
 
-![[../assets/img/M11.png]]
+<img src="/assets/img/M11.png" alt="" />
 
 For our example first partition, these bytes are `00 B0 23 03`. Since they’re stored in little-endian format, we need to reverse them first, just like we did earlier. After reversing, they become `03 23 B0 00`.
 
 Now, let’s convert `03 23 B0 00` to decimal. You can do this in the HxD tool by highlighting the bytes and checking the Int32 value in the Data Inspector pane—just like we did for the Starting LBA Address. The decimal value for these bytes comes out to be `52,670,464`.
 
-![[../assets/img/M12.png]]
+<img src="/assets/img/M12.png" alt="" />
 
 Each sector is 512 bytes, so to get the size of the partition, we just multiply the Number of Sectors by the sector size:
 
@@ -196,7 +196,7 @@ That’s it! This means the size of this partition is `26.97 GB`. Knowing the si
 
 The last part of the Master Boot Record (MBR) is the MBR Signature. It’s just two bytes—short and simple, right? But don’t underestimate its importance! If these two bytes are altered or missing, it can cause major trouble and prevent the system from booting altogether. In the screenshot below, you’ll see the whole MBR with the MBR signature highlighted at the very bottom. 
 
-![[../assets/img/M13.png]]
+<img src="/assets/img/M13.png" alt="" />
 
 In every valid MBR, the signature is always `55 AA`, and it appears right at the end. This signature acts like a "seal of authenticity," letting the system know that the MBR is complete and ready for action.
 
