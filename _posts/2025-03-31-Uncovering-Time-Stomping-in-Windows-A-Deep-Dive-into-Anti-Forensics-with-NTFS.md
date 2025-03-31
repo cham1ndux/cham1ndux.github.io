@@ -81,13 +81,13 @@ MFTECmd.exe -f "C:\Users\Chamindu\Desktop\MFT\C\$MFT" --body C:\Users\Chamindu\D
 
 The parsed output of MFTECmd for a suspicious file. and visible differences between `$STANDARD_INFORMATION` and `$FILE_NAME` timestamps.
 
-<img src="/assets/img/mft-4.png" alt="" />
+<img src="/assets/img/mft-5.png" alt="" />
 
 ```powershell
 MFTECmd.exe -f "C:\Users\Chamindu\Desktop\MFT\C\$MFT" --de 102073
 ```
 
-<img src="/assets/img/mft-5.png" alt="" />
+<img src="/assets/img/mft-4.png" alt="" />
 
 Any indicators like zeroed microseconds in the timestamps (e.g., `2020-01-01 06:30:00.0000000`), which hint that they were modified via the Windows API.
 
