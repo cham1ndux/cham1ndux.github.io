@@ -108,7 +108,11 @@ Let’s say you’ve collected the `MFT` and are analyzing a suspicious binary n
 
 The microseconds in `$FILE_NAME` look natural, while the `$STANDARD_INFORMATION` timestamps are all rounded. This tells us that someone manually altered the timestamp using a limited API.
 
-> The mismatch between these two attributes is a key indicator of anti-forensic tampering.
+👉 The mismatch between these two attributes is a key indicator of anti-forensic tampering.
+
+
+> This is important: The Windows API used in most time stomping techniques doesn’t support setting precise microsecond values, so the result often looks like `2020-01-01 12:00:00.0000000`.
+In real-world scenarios, NTFS-generated timestamps almost never have all-zero microseconds. This makes the appearance of rounded timestamps a strong indicator of manual manipulation, pointing to possible time stomping activity.
 {: .prompt-info }
 
 ## Conclusion: Time Stomping Leaves Clues
