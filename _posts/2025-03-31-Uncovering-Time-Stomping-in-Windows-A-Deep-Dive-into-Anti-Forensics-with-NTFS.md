@@ -49,15 +49,15 @@ Here’s where NTFS (New Technology File System) gives us the upper hand.
 
 NTFS stores multiple sets of timestamps across different attributes. These are the main ones to know:
 
-- `STANDARD INFORMATION` – Contains the timestamps used by Windows Explorer and most standard tools. This is what attackers usually modify.
+- `$STANDARD_INFORMATION` – Contains the timestamps used by Windows Explorer and most standard tools. This is what attackers usually modify.
 
-- `FILE NAME` – Contains a second, independent set of timestamps associated with the file name. These are much harder to spoof via standard API calls.
+- `$FILE_NAME` – Contains a second, independent set of timestamps associated with the file name. These are much harder to spoof via standard API calls.
 
-Even if an attacker changes the `STANDARD INFORMATION` timestamps, they usually leave behind discrepancies in the `FILE NAME` attribute.
+Even if an attacker changes the `$STANDARD_INFORMATION` timestamps, they usually leave behind discrepancies in the `$STANDARD_INFORMATION` attribute.
 
 ## Using the Master File Table (MFT) to Detect Time Stomping
 
-The Master File Table (MFT) is a core structure in NTFS that tracks every file and folder on the volume. Each file has an MFT entry that contains metadata including both `STANDARD INFORMATION` and `FILE NAME` timestamps.
+The Master File Table (MFT) is a core structure in NTFS that tracks every file and folder on the volume. Each file has an MFT entry that contains metadata including both `$STANDARD_INFORMATION` and `$FILE_NAME` timestamps.
 
 Here’s a practical approach to detect time stomping:
 
@@ -81,7 +81,7 @@ MFTECmd.exe -f "C:\Users\Chamindu\Desktop\MFT\C\$MFT" --body C:\Users\Chamindu\D
 
 Use this section to insert a screenshot showing:
 
-The parsed output of MFTECmd for a suspicious file. and visible differences between `STANDARD INFORMATION` and `FILE NAME` timestamps.
+The parsed output of MFTECmd for a suspicious file. and visible differences between `$STANDARD_INFORMATION` and `$FILE_NAME` timestamps.
 
 <img src="/assets/img/mft-4.png" alt="" />
 
@@ -106,7 +106,7 @@ Let’s say you’ve collected the `MFT` and are analyzing a suspicious binary n
 
 - `FILE NAME` timestamps show `2025-03-31 09:19:46.7950679`
 
-The microseconds in `FILE NAME` look natural, while the `STANDARD INFORMATION` timestamps are all rounded. This tells us that someone manually altered the timestamp using a limited API.
+The microseconds in `$FILE_NAME` look natural, while the `$STANDARD_INFORMATION` timestamps are all rounded. This tells us that someone manually altered the timestamp using a limited API.
 
 > The mismatch between these two attributes is a key indicator of anti-forensic tampering.
 {: .prompt-info }
@@ -119,6 +119,6 @@ Time stomping is a clever way for attackers to hide in plain sight. But they oft
 - NTFS stores multiple timestamp attributes some of which are harder to modify.
 - Tools like `MFTECmd` can reveal timestamp mismatches that point to tampering.
 - Rounded timestamps with all **zeros = suspicious**.
-- Always compare `STANDARD INFORMATION` vs `FILE NAME`!
+- Always compare `$STANDARD_INFORMATION` vs `$FILE_NAME`!
 
 If you're doing a forensic investigation on NTFS systems, don't trust timestamps at face value. Dig deeper—and you'll often find the truth hidden in plain sight.
