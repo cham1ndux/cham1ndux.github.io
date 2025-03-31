@@ -51,7 +51,7 @@ NTFS stores multiple sets of timestamps across different attributes. These are t
 
 - `$STANDARD_INFORMATION` – Contains the timestamps used by Windows Explorer and most standard tools. This is what attackers usually modify.
 
-- `$FILE_NAME` – Contains a second, independent set of timestamps associated with the file name. These are much harder to spoof via standard API calls.
+- `$FILE_NAME` – Contains a second, independent set of timestamps associated with the file name. File name time-stamping is harder to tamper with, as it’s not affected by typical Windows API calls.
 
 Even if an attacker changes the `$STANDARD_INFORMATION` timestamps, they usually leave behind discrepancies in the `$STANDARD_INFORMATION` attribute.
 
@@ -93,9 +93,6 @@ MFTECmd.exe -f "C:\Users\Chamindu\Desktop\MFT\C\$MFT" --de 102073
 
 Any indicators like zeroed microseconds in the timestamps (e.g., `2020-01-01 06:30:00.0000000`), which hint that they were modified via the Windows API.
 
-> Pro Tip: Timestamp values with all trailing zeros are very unusual and are a strong indicator of time stomping.
-{: .prompt-info }
-
 ## Case Example: Timestamp Mismatch Revealing the Truth
 
 Let’s say you’ve collected the `MFT` and are analyzing a suspicious binary named `mimiktaz.exe`. Here's what you observe:
@@ -126,3 +123,5 @@ Time stomping is a clever way for attackers to hide in plain sight. But they oft
 - Always compare `$STANDARD_INFORMATION` vs `$FILE_NAME`!
 
 If you're doing a forensic investigation on NTFS systems, don't trust timestamps at face value. Dig deeper—and you'll often find the truth hidden in plain sight.
+
+A skilled attacker can manipulate timestamps—but NTFS records the truth in multiple places. As analysts, it's our job to ask: “Does this timeline make sense?” and dig until we’re sure.
