@@ -35,7 +35,7 @@ $path = "C:\Windows\System32\mimikatz.exe"
 
 With just a few lines of code, the file now looks like it's been there for years—even if it was dropped on 2025.
 
-In the first image below, we observe a suspicious file, mimikatz.exe, placed in the C:\Windows\System32 directory. Its Date Modified is `31/03/2025 14:50` and Date Created is `31/03/2025 14:09`. 
+In the first image below, we observe a suspicious file, mimikatz.exe, placed in the `C:\Windows\System32` directory. Its Date Modified is `31/03/2025 14:50` and Date Created is `31/03/2025 14:09`. 
 
 <img src="/assets/img/mft1.png" alt="" />
 
@@ -93,7 +93,7 @@ MFTECmd.exe -f "C:\Users\Chamindu\Desktop\MFT\C\$MFT" --de 102073
 
 Any indicators like zeroed microseconds in the timestamps (e.g., `2020-01-01 06:30:00.0000000`), which hint that they were modified via the Windows API.
 
-> 👉 Pro Tip: Timestamp values with all trailing zeros are very unusual and are a strong indicator of time stomping.
+> Pro Tip: Timestamp values with all trailing zeros are very unusual and are a strong indicator of time stomping.
 {: .prompt-info }
 
 ## 📂 Case Example: Timestamp Mismatch Revealing the Truth
@@ -108,7 +108,8 @@ Let’s say you’ve collected the `MFT` and are analyzing a suspicious binary n
 
 The microseconds in `FILE NAME` look natural, while the `STANDARD INFORMATION` timestamps are all rounded. This tells us that someone manually altered the timestamp using a limited API.
 
-👉 **The mismatch between these two attributes is a key indicator of anti-forensic tampering.**
+> The mismatch between these two attributes is a key indicator of anti-forensic tampering.
+{: .prompt-info }
 
 ## 🛡️ Conclusion: Time Stomping Leaves Clues
 Time stomping is a clever way for attackers to hide in plain sight. But they often overlook the redundant timestamp storage in NTFS. By analyzing the MFT and comparing multiple timestamp sources, forensic analysts can detect even subtle manipulations.
