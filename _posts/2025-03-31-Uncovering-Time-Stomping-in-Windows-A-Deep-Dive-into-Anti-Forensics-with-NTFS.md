@@ -14,13 +14,13 @@ image:
 
 In the world of digital forensics, attackers are constantly trying to cover their tracks—and one subtle but powerful method they use is time stomping. It’s an anti-forensic technique designed to manipulate file timestamps, hiding the true timeline of malicious activity. But thanks to the structure of the NTFS file system, we as analysts can still find traces of deception—if we know where to look.
 
-## 🕵️‍♂️ Why Attackers Hide in System Folders
+## Why Attackers Hide in System Folders
 
 One of the most common places attackers try to hide malware is in the `C:\Windows\System32` folder or similar system directories. These locations are filled with legitimate binaries and DLLs that Windows relies on. Dropping malware in here helps it blend into the noise.
 
 But this strategy has a weak point: file modification dates. Most legitimate files in this folder were last modified when Windows was installed or updated. So if a malicious file was added recently, it sticks out like a sore thumb—and that's exactly what analysts are trained to spot.
 
-## 🛠️ What is Time Stomping?
+## What is Time Stomping?
 
 To prevent detection, attackers change the timestamps of the malicious file—a technique known as time stomping. This involves altering the file’s creation, modification, and access timestamps to mimic legitimate system files.
 
@@ -43,7 +43,7 @@ In the second part of the screenshot below, we see the same file after a time st
 
 <img src="/assets/img/mft2.png" alt="" />
 
-## 🧠 The NTFS Advantage for Forensic Analysts
+## The NTFS Advantage for Forensic Analysts
 
 Here’s where NTFS (New Technology File System) gives us the upper hand.
 
@@ -55,7 +55,7 @@ NTFS stores multiple sets of timestamps across different attributes. These are t
 
 Even if an attacker changes the `STANDARD INFORMATION` timestamps, they usually leave behind discrepancies in the `FILE NAME` attribute.
 
-## 🔍 Using the Master File Table (MFT) to Detect Time Stomping
+## Using the Master File Table (MFT) to Detect Time Stomping
 
 The Master File Table (MFT) is a core structure in NTFS that tracks every file and folder on the volume. Each file has an MFT entry that contains metadata including both `STANDARD INFORMATION` and `FILE NAME` timestamps.
 
@@ -96,7 +96,7 @@ Any indicators like zeroed microseconds in the timestamps (e.g., `2020-01-01 06:
 > Pro Tip: Timestamp values with all trailing zeros are very unusual and are a strong indicator of time stomping.
 {: .prompt-info }
 
-## 📂 Case Example: Timestamp Mismatch Revealing the Truth
+## Case Example: Timestamp Mismatch Revealing the Truth
 
 Let’s say you’ve collected the `MFT` and are analyzing a suspicious binary named `mimiktaz.exe`. Here's what you observe:
 
@@ -111,10 +111,10 @@ The microseconds in `FILE NAME` look natural, while the `STANDARD INFORMATION` t
 > The mismatch between these two attributes is a key indicator of anti-forensic tampering.
 {: .prompt-info }
 
-## 🛡️ Conclusion: Time Stomping Leaves Clues
+## Conclusion: Time Stomping Leaves Clues
 Time stomping is a clever way for attackers to hide in plain sight. But they often overlook the redundant timestamp storage in NTFS. By analyzing the MFT and comparing multiple timestamp sources, forensic analysts can detect even subtle manipulations.
 
-### 📌 TL;DR
+### TL;DR
 - Attackers drop malware in system folders and use time stomping to make it look old.
 - NTFS stores multiple timestamp attributes some of which are harder to modify.
 - Tools like `MFTECmd` can reveal timestamp mismatches that point to tampering.
