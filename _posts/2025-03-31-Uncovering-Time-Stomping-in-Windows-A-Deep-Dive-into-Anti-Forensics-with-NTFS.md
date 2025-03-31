@@ -79,8 +79,6 @@ MFTECmd.exe -f "C:\Users\Chamindu\Desktop\MFT\C\$MFT" --body C:\Users\Chamindu\D
 
 ## MFT Analysis with MFTECmd
 
-Use this section to insert a screenshot showing:
-
 The parsed output of MFTECmd for a suspicious file. and visible differences between `$STANDARD_INFORMATION` and `$FILE_NAME` timestamps.
 
 <img src="/assets/img/mft-4.png" alt="" />
