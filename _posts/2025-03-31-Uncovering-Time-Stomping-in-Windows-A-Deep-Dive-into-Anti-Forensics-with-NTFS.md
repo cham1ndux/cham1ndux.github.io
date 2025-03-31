@@ -35,11 +35,11 @@ $path = "C:\Windows\System32\mimikatz.exe"
 
 With just a few lines of code, the file now looks like it's been there for years—even if it was dropped on 2025.
 
-Before Time Stomping show below image.
+In the first image below, we observe a suspicious file, mimikatz.exe, placed in the C:\Windows\System32 directory. Its Date Modified is `31/03/2025 14:50` and Date Created is `31/03/2025 14:09`. 
 
 <img src="/assets/img/mft1.png" alt="" />
 
-After that Time Stomping show below image.
+In the second part of the screenshot below, we see the same file after a time stomping operation has been performed using PowerShell. Now, both Date Modified and Date Created are set to `01/01/2020 12:00`, which gives the impression that the file has been there for years.
 
 <img src="/assets/img/mft2.png" alt="" />
 
