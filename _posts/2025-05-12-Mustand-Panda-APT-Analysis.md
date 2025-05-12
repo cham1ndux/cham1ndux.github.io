@@ -200,7 +200,7 @@ After the threat actor successfully brute-forced the `dataflowsvc` account, they
 
 <img src="/assets/img/apt11.png" alt="" />
 
-```cmd
+```bash
 cmd.exe /Q /c whoami 1> \\127.0.0.1\ADMIN$\__*.44594 2>&1
 cmd.exe /Q /c cd \ 1> \\127.0.0.1\ADMIN$\__*.44594 2>&1
 ```
@@ -409,7 +409,7 @@ private static async Task Main(string[] args)
 		Console.WriteLine("Usage: Uploader.exe <full_path_to_file>");
 		return;
 	}
-  ```
+```
 
 The executable expects a single argument — the full path to the file that should be uploaded. If this argument is not supplied, the process terminates with a usage hint.
 
@@ -468,7 +468,7 @@ And that’s a wrap! After hours of triage, log diving, binary reversing, and tr
 
 What stood out the most? Seeing how each phase — from initial access via malicious email to domain-wide credential theft — leaves a consistent, traceable trail when viewed in the right context. The way tools like `xbyssd.exe` blend in under user contexts, the quiet abuse of `Dropbox APIs`, and how even a RAR archive carries weight in an exfiltration chain — it’s all there if you know where to look.
 
-A huge shoutout to the team behind **@XINTRA** for creating a lab this detailed. Every log felt authentic, every artifact useful, and every pivot led to something meaningful. Massive thanks to all the analysts, red teamers, and reverse engineers who continue to raise the bar in adversary emulation and detection.
+A huge shoutout to the team behind [@XINTRA](https://www.xintra.org/) for creating a lab this detailed. Every log felt authentic, every artifact useful, and every pivot led to something meaningful. Massive thanks to all the analysts, red teamers, and reverse engineers who continue to raise the bar in adversary emulation and detection.
 
 To anyone out there digging into similar TTPs, stay curious and keep learning. Threat actors may be stealthy — but we’ve got grit, timestamps, and YARA.
 
