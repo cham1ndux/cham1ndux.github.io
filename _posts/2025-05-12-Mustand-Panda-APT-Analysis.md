@@ -205,7 +205,7 @@ cmd.exe /Q /c whoami 1> \\127.0.0.1\ADMIN$\__*.44594 2>&1
 cmd.exe /Q /c cd \ 1> \\127.0.0.1\ADMIN$\__*.44594 2>&1
 ```
 
-![alt text](apt32.png)
+<img src="/assets/img/apt33.png" alt="WMI" />
 
 In this case we have two source IP addresses, `127.0.0.1` and `10.78.3.11`. The former, of course is our local host. We can see two access masks here, the most notable is `0x2`. From the log, we know this is a `WriteData` mask, and is almost certainly the event produced when our wmiexec command pipes its output into a file in the "C:\Windows" directory.
 
