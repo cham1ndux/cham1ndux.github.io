@@ -225,10 +225,10 @@ These commands were launched using **WMI (Windows Management Instrumentation)**,
 
 <img src="https://i.imgflip.com/9tns5u.jpg" alt="" />
 
-<img src="/assets/img/apt12.png" alt="" />
-
 
 ### Access in to Exchange Server
+
+<img src="/assets/img/apt12.png" alt="" />
 
 After obtaining valid credentials for the `dataflowsvc` account, the threat actor expanded their foothold within the environment by moving laterally to a second system. On `February 24, 2025`, telemetry confirmed that the attacker authenticated to the host `CTA-MX01` using the compromised user account and accessed a remote share on the originally infected machine `CTA-WKS01`. The attacker accessed a local path via the network using the format `\\??\C:\`, which is commonly seen when attackers attempt to bypass standard path normalization or operate at a lower-level I/O layer. Within this share, they navigated to the directory `ExchSecIns\srcdat` and dropped a copy of their previously deployed malware, `AAUpdates.exe`, onto the new target system.
 
