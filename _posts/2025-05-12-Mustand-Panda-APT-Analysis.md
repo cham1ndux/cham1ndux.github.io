@@ -497,6 +497,14 @@ A huge shoutout to the team behind [@XINTRA](https://www.xintra.org/) for creati
 
 To anyone out there digging into similar TTPs, stay curious and keep learning. Threat actors may be stealthy — but we’ve got grit, timestamps, and YARA.
 
+## 📬 Let’s Connect
+
+If you have any feedback on my analysis, methodology, or investigative approach to this lab, I’d love to hear from you. Whether it’s suggestions for improving my process, alternative hunting techniques, or better ways to structure the investigation — feel free to reach out!
+
+You can find me on Discord at @m3r1.t — always happy to connect with fellow analysts and learn from different perspectives. 🙌
+
+<img src="/assets/img/certpanda.png" alt="" />
+
 ## Sources
 
 Linked articles in order of appearance:
