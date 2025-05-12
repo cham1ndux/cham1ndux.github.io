@@ -401,7 +401,7 @@ Upon decompiling the recovered binary `xbyssd.exe`, it was revealed to be a C#-b
 
 The main logic is implemented within the `Main()` method of a C# async task, and exhibits the following behaviors:
 
-```C
+```c
 private static async Task Main(string[] args)
 {
 	if (args.Length < 1)
