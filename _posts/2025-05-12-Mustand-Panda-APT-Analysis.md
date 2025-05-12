@@ -30,11 +30,12 @@ The tools provided in the lab are comprehensive and I only used a subset listed 
 
 - CyberChef
 - EricZimmerman suite: Timeline Explorer
-- SysinternalsSuite: Procmon
+- SysinternalsSuite: strings
 - 7zip
 - Notepad++
 - cobaltstrike-config-extractor
 - ILSpy
+- XST Reader
 
 
 ## NETWORK DIAGRAM
