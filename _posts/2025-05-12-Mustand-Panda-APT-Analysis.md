@@ -378,6 +378,9 @@ The parent-child process relationship, along with the continued execution under 
 
 By creating a shadow copy, the attacker likely intended to extract sensitive domain data while avoiding file lock errors or detection from real-time monitoring tools. This action further escalates the threat level, showing direct access to domain controller-level artifacts and preparing the groundwork for data exfiltration or credential harvesting.
 
+> There are a few ways to dump Active Directory and local password hashes. Until recently, the techniques I had seen used to get the hashes either relied on injecting code in to LSASS or using the Volume Shadow Copy service to obtain copies of the files which contain the hashes. Source : [SpiderLabs Blog](https://web.archive.org/web/20131126032842/http://blog.spiderlabs.com/2013/11/tutorial-for-ntds-goodness-vssadmin-wmis-ntdsdit-system-.html)
+{: .prompt-info }
+
 ### Dump NTDS.dit
 
 Following the creation of a shadow copy of the `C:` drive on the domain controller `CTA-DC01`, I identified a second command executed just two minutes later, at `10:55:25 UTC on February 26, 2025`. This command extracted the Active Directory database file `NTDS.dit` directly from the newly created shadow copy:
