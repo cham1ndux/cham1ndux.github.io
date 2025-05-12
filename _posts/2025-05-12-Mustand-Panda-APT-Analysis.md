@@ -99,7 +99,7 @@ After confirming the ZIP archive `ASEAN2024.zip` was written to disk and likely 
 ASEAN 2024.pdf
 ```
 
-<img src="/assets/img/apt34.png" alt="" />
+<img src="/assets/img/apt34.png" alt="LNK file" />
 
 At first glance, it appears to be a legitimate PDF. However, the file type was `Shortcut (.lnk)` — not a document. This deception is a classic Mustang Panda tactic, using LNK files with misleading names and icons to socially engineer user execution.
 
