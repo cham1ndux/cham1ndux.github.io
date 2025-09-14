@@ -34,10 +34,10 @@ This scenario is designed to simulate a full intrusion lifecycle and provide an 
 
 ## Scoping Note
 
-**Organization**: Assassin Kitty Corp
-**Industry**: Military Robotics
-**Founded**: 2019
-**Founder**: Dr. MenaceClawz
+- **Organization**: Assassin Kitty Corp
+- **Industry**: Military Robotics
+- **Founded**: 2019
+- **Founder**: Dr. MenaceClawz
 
 Assassin Kitty Corp specializes in developing advanced military robotics, most notably cat-like robotic assassins designed for tactical deployment.
 
