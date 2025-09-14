@@ -1,20 +1,16 @@
 ---
 title: APT29 Hybrid Intrusion Simulation
-date: 2025-05-12 12:00:00
+date: 2025-09-14 12:00:00
 categories: [DFIR]
 tags: [dfir]
 pin: false
 math: true
 mermaid: true
 image:
-  path: /assets/img/Mustand.png
+  path: /assets/img/cozy.png
   lqip:
-  alt: APT-Inspired Threat Hunting Walkthrough
+  alt: APT29 Hybrid Intrusion Simulation
 ---
-
-## Contributors
-Adversarial Emulator: [@inversecos]
-Incident Responder: [@inversecos]
 
 ## Threat Actor
 
@@ -177,7 +173,7 @@ Several cmdlets stood out as being executed in a sequence that aligns closely wi
 
 This sequence is significant for two reasons:
 
-- **Privilege Escalation:** The attacker first assigned the “Mailbox Import Export” role to the compromised account, granting it the ability to export mailbox data — a step typically needed in Exchange exploitation scenarios.
+- **Privilege Escalation:** The attacker first assigned the `Mailbox Import Export` role to the compromised account, granting it the ability to export mailbox data — a step typically needed in Exchange exploitation scenarios.
 
 - **Data Access & Cleanup:** The attacker first created multiple `New-MailboxExportRequest` jobs to export mailbox data and then used `Remove-MailboxExportRequest` to delete those export job records from Exchange, effectively erasing evidence of which mailboxes were exported. Additionally, Search-Mailbox was executed with `-DeleteContent` to locate and permanently delete specific messages, showing clear intent to both access data and cover tracks.
 
@@ -255,9 +251,23 @@ Here’s how they used it:
 
 This is a very stealthy technique because it uses legitimate Exchange functionality and doesn’t involve dropping a suspicious binary manually — everything looks like standard mailbox export activity until you look closely at the file path and extension.
 
-<a href="https://imgflip.com/i/a5zm4w"><img src="https://i.imgflip.com/a5zm4w.jpg" title="made at imgflip.com"/></a>
+<img src="https://i.imgflip.com/a5zm4w.jpg" alt="" />
 
-Searching the IIS logs for `20.248.160.67` revealed multiple events of interest. The IP shows up in the cs_referer field and is linked to client IP `49.186.216.46`, which had been active earlier in the attack chain.
+During the investigation, I observed the creation of a new mailbox with the UPN `winston@assassinkitty.com` and the display name `Eaves Dropper` Immediately after this creation, the attacker modified the `Organization Management role` group, assigning it to be managed by the user `eaves` and using the parameter `-BypassSecurityGroupManagerCheck $True` to bypass the security group manager approval process.
+
+<img src="/assets/img/as76.png" alt="" />
+
+The Organization Management role group is one of the most privileged groups in Exchange. Membership in this group grants full administrative control over the Exchange organization, meaning the attacker could perform high-impact actions across the entire environment.
+
+Finally, the attacker ran the Set-Mailbox cmdlet on the newly created mailbox and set the parameter `-HiddenFromAddressListsEnabled $True`. This action hid the `Eaves Dropper` mailbox from the Global Address List (GAL), allowing the attacker to maintain stealth and avoid detection by administrators or other users.
+
+From the investigation, I observed that the attacker tampered with Exchange Web Services (EWS) by modifying its external URL to point to `https://20.248.160.67/EWS/exchange.asmx`. This change could allow the attacker to redirect or monitor EWS traffic for malicious purposes, potentially enabling data exfiltration or mailbox access over a controlled endpoint.
+
+In addition, the attacker deleted the mailbox belonging to `Sombra SC. Colomar`, likely to disrupt communications or remove evidence. They then updated the UPN of the `EavesDropper` mailbox to `eaves@assassinkitty.com` consolidating persistence under the new identity. This action indicates a clear attempt to maintain long-term access and control over the Exchange environment while covering their tracks.
+
+<img src="/assets/img/as77.png" alt="" />
+
+Searching the IIS logs for `20.248.160.67` revealed multiple events of interest. The IP shows up in the `cs_referer` field and is linked to client IP `49.186.216.46`, which had been active earlier in the attack chain.
 
 <img src="/assets/img/as19.png" alt="" />
 
@@ -314,9 +324,9 @@ The logs show multiple `POST` requests to this file, all with `200` OK responses
 
 The query parameter (`fdir=C:\Windows\Temp\Tools`) makes it look like the attacker was either browsing or retrieving files from that directory. This strongly suggests that `download.aspx` was not a legitimate Exchange file but a custom web shell attacker deployed.
 
-### **download.aspx** Web Shell
+### **download.aspx** Web Shell Analysis
 
-Reviewing the contents of download.aspx confirmed it to be a classic ASPX Shell. Below is a breakdown of its main functionality:
+Reviewing the contents of `download.aspx` confirmed it to be a classic ASPX Shell. Below is a breakdown of its main functionality:
 
 ```csharp
 string dir = Page.MapPath(".") + "/";
@@ -359,7 +369,7 @@ The presence of these tools lines up with what was observed in the IIS logs (`do
 
 ## Credential Dumping
 
-Further review of the IIS logs shows that the download.aspx web shell was not limited to interacting with files in `C:\Windows\Temp\Tools`. Multiple GET requests were also observed targeting the broader `C:\Windows\Temp` directory.
+Further review of the IIS logs shows that the `download.aspx` web shell was not limited to interacting with files in `C:\Windows\Temp\Tools`. Multiple GET requests were also observed targeting the broader `C:\Windows\Temp` directory.
 
 <img src="/assets/img/as20.png" alt="" />
 
@@ -375,9 +385,13 @@ To confirm how `lsass.dmp` was created, Event ID 4688 (process creation) logs we
 
 <img src="/assets/img/as22.png" alt="" />
 
-This process chain shows that the attacker used PowerShell to spawn procdump64.exe and dump LSASS memory. The resulting dump (lsass.dmp) was later found in the Temp directory, indicating credential harvesting activity.
+This process chain shows that the attacker used PowerShell to spawn `procdump64.exe` and dump LSASS memory. The resulting dump (`lsass.dmp`) was later found in the Temp directory, indicating credential harvesting activity.
 
-While digging deeper into the system, another copy of the LSASS memory dump was found — this time inside the Temp folder of the user account `Henry` (`C:\Users\henry\AppData\Local\Temp\lsass.DMP`).
+While reviewing the PowerShell transcript logs in `C:\Windows\System32\PowerShellTranscript\20230408\`, I found clear evidence of credential-dumping activity. The transcript captured the execution of:
+
+<img src="/assets/img/as29.png" alt="" />
+
+Aslo digging deeper into the system, another copy of the LSASS memory dump was found — this time inside the Temp folder of the user account `Henry` (`C:\Users\henry\AppData\Local\Temp\lsass.DMP`).
 
 <img src="/assets/img/as23.png" alt="" />
 
@@ -407,3 +421,365 @@ Analyzing the `$MFT` of DC01 revealed that the `ntds.dit` database was successfu
 
 ## Malware & Persistence
 
+This finding indicates that the attacker didn’t just stop after dumping LSASS memory — they also worked on establishing persistence. The Event ID `4720` confirms that a new local account named `pcmanage` was created on PC01 under the user `henry` The timing lines up with when the attacker had active control of the environment, meaning this was likely a backdoor account created for long-term access.
+
+<img src="/assets/img/as28.png" alt="" />
+
+As mentioned earlier, the Security Team kicked off Defender scans across all hosts in the environment. These scans flagged 34 events in total — Event ID 1116 (detections) and 1117 (remediation actions). 
+
+<img src="/assets/img/as30.png" alt="" />
+
+Most hits came from PC01 (16 events), followed by Mail01 (10), PC02 (6), and DC01 (2). This gives a good picture of where the most malicious activity was happening.
+
+### Analysis for the scheduled task creation
+
+While digging into Event ID 4698 (Scheduled Task Created), I focused on tasks that were created under the user account winston. A few of these stood out as clearly suspicious — tasks named `PowerShellUpdate`, `WindowsUpdateAssistant`, `MEGAsync`, and several `OneDrive Standalone Update` tasks.
+
+<img src="/assets/img/as31.png" alt="" />
+
+These aren’t standard Windows tasks and are a classic persistence trick. What’s interesting is that they were spread across multiple hosts — the `ADFS server`, `PC02`, and `PC01` — which shows the attacker was trying to maintain access across the environment, not just on one machine.
+
+After digging into `C:\Windows\System32\Tasks`, I pulled up the XML for the PowerShellUpdate scheduled task. 
+
+<img src="/assets/img/as32.png" alt="" />
+
+The task is set to run PowerShell with hidden and `non-interactive` flags (`-WindowStyle hidden -NoLogo -NonInteractive -ep bypass -nop`) and uses `Invoke-WebRequest` to download a payload from `http://20.92.20.220:80/.`
+
+When I dug into the `WindowsUpdateAssistant` scheduled task, it was pretty clear what the attacker was doing. The task was configured to run every time someone logged in, which is a classic way to maintain persistence on a compromised machine. 
+
+<img src="/assets/img/as33.png" alt="" />
+
+The PowerShell logs even showed the exact commands used: they created the task with `schtasks /create`, named it `WindowsUpdateAssistant`, pointed it to run `C:\Windows\System32\WindowsUpdateAssistant.exe`, set it to trigger on logon (`/sc onlogon`), and made it run under the SYSTEM account (`/ru System`). This basically gave them a guaranteed way to re-execute their code with full privileges after any reboot or user login — a simple but effective persistence mechanism.
+
+### Establish Persistence via Service creation
+
+Digging deeper into DC01’s logs made it clear what the attacker was doing. Using `sc create`, they set up a new service called `PowerShellUpdater`, pointing it to a malicious executable they had dropped earlier. They even gave it a legit-sounding description — `Update service for PowerShell` — to blend in with normal system activity. Right after that, they used `sc start` to fire it up, ensuring their backdoor was live and running.
+
+<img src="/assets/img/as34.png" alt="" />
+
+This was a classic case of service-based persistence. By creating and starting a malicious service, the attacker guaranteed that their payload would survive reboots and continue to give them remote access. It’s sneaky, effective, and exactly why monitoring service creation events is critical in a Windows environment.
+
+### Establish Persistence via WMI
+
+Now I started analyzing Event ID 5861 to check for any suspicious WMI permanent event subscriptions. Sure enough, I found an event filter named `PSUpdate` that was configured to trigger whenever the system uptime hits between 240 and 325 minutes. That’s already suspicious because it’s a persistence mechanism that will fire on a predictable schedule.
+
+<img src="/assets/img/as35.png" alt="" />
+
+Digging deeper, the consumer attached to this filter runs a PowerShell command that downloads and executes a payload from `http://20.92.20.220:80/a`. This means every time the condition is met, the attacker’s payload will get pulled down and executed, effectively giving them a backdoor whenever they want it. This technique is a lot stealthier than just dropping a scheduled task because WMI subscriptions are rarely checked during routine monitoring and survive reboots.
+
+## Lateral Movement
+
+Now I shifted my focus to lateral movement activity. I started digging into process creation logs (Event ID 4688) and noticed multiple executions of `PsExec64.exe` on DC01. All of these processes were launched by `cmd.exe`, which strongly indicates remote execution. The user account associated with these executions was henry, which ties back to the previously compromised account we observed earlier during the mailbox export and web shell phases.
+
+<img src="/assets/img/as36.png" alt="" />
+
+This behavior clearly shows that the attacker was using `PsExec` for lateral movement across the environment, likely to run commands remotely and gain further access. Since PsExec is a legitimate administrative tool, its presence alone isn’t malicious, but its timing, frequency, and association with the compromised account make it a key indicator of malicious activity in this case.
+
+When PsExec is executed on a remote system, it temporarily installs a service named `PSEXESVC` to carry out its tasks. 
+
+<img src="/assets/img/as37.png" alt="" />
+
+Based on my previous experience, I specifically checked the event logs for this service and confirmed that `PSEXESVC` was installed on PC01. This clearly indicates that the threat actor used PsExec to conduct lateral movement from DC01 to PC01.
+
+While reviewing Event ID 5145, which logs network share access attempts, I noticed multiple accesses to the `\\KittyShare` network share on `April 9, 2023`, starting at `06:43:15`. These events were tied to the user account winston, confirming that the threat actor was actively exploring shared resources on the domain controller.
+
+<img src="/assets/img/as39.png" alt="" />
+
+The accessed items included files like below:
+
+<img src="/assets/img/as40.png" alt="" />
+
+<img src="/assets/img/as41.png" alt="" />
+
+<img src="/assets/img/as42.png" alt="" />
+
+<img src="/assets/img/as44.png" alt="" />
+
+Next, I analyzed process creation logs (Event ID 4688) to look for signs of lateral movement. During this review, I observed several instances where `wmiprvse.exe` spawned `powershell.exe` on MAIL01. This behavior is a strong indicator of remote WMI execution. 
+
+<img src="/assets/img/as43.png" alt="" />
+
+Given the pattern of activity, it is clear that the attacker used Impacket’s `wmiexec.py` to execute commands remotely on DC01. This confirms that lateral movement was performed over WMI using the MAIL01 host as the launching point.
+
+Now I moved on to analyze the process creation events to confirm which user account was behind the WMI-based lateral movement. By filtering Event ID 4688 on DC01, I could clearly see multiple instances where `cmd.exe` spawned `WmiPrvSE.exe`, which is a strong sign of remote WMI execution. 
+
+<img src="/assets/img/as45.png" alt="" />
+
+Correlating these events with the security log revealed that the activity was executed under the `henry` account. This confirms that the attacker used Impacket’s `wmiexec.py` from MAIL01 to DC01 to run remote commands.
+
+### Pass-the-hash
+
+While analyzing the Credential Dumping phase, I also found several additional indicators that strongly support the hypothesis of a Pass-the-Hash attack. First, LogonType 9 stood out as it is relatively rare and is typically associated with token impersonation or PtH attacks.
+
+<img src="/assets/img/as46.png" alt="" />
+
+
+This logon type indicates that alternate credentials were specified — usually through methods like `RunAs /netonly`, `CreateProcessWithLogonW` with `LOGON_NETCREDENTIALS_ONLY`, or `LogonUserW` with `LOGON32_LOGON_NEW_CREDENTIALS`.
+
+The `AuthenticationPackage` being set to Negotiate further strengthens this case because it allows fallback to NTLM if Kerberos authentication isn’t available — which is ideal for an attacker who already has access to NTLM hashes. Based on earlier findings where the attacker dumped `ntds.dit` using `vssadmin.exe` and captured LSASS memory with `ProcDump`, it’s entirely plausible that these NTLM hashes were later leveraged for lateral movement.
+
+Another strong sign is the null LogonGuid, which usually means the session wasn’t created interactively — this is common in credential replay scenarios. Lastly, the IpAddress field showing `::1` points to a local logon, suggesting that the activity originated from a local service or through remote execution tools such as PsExec or Impacket’s `wmiexec.py`, which fits with the overall attacker behavior observed earlier.
+
+> This finding is especially concerning because compromising ADFS opens the door to Golden SAML attacks. With access to ADFS and its token-signing certificate, an attacker can forge authentication tokens (SAML assertions) that will be trusted by all federated applications, including Microsoft 365, AWS, and other SSO-enabled services. In short, a successful PtH attack on ADFS doesn’t just give the attacker access to a single host — it gives them a way to impersonate any user, including domain admins or cloud admins, without needing their actual passwords. This makes it a critical step in many real-world intrusions and is why this phase of the attack chain is so high-impact.
+{: .prompt-info }
+
+##  Golden SAML
+
+Now I moved into investigating activity on the ADFS server and immediately noticed suspicious PowerShell transcripts tied to the user account `winston` The logs revealed that the attacker had installed and executed `AADInternals`, a well-known PowerShell toolkit used for Azure AD and Office 365 exploitation.
+
+<img src="/assets/img/as47.png" alt="" />
+
+This was a major finding because it confirmed that after performing the pass-the-hash attack and gaining access to the ADFS service account, the attacker pivoted toward targeting Azure resources.
+
+This finding ties directly back to the credential theft phase (where `ntds.dit` and `lsass.exe` were dumped) and shows the attacker is leveraging those stolen credentials to move beyond the on-prem environment and into cloud assets.
+
+### LDAP recon for ADFS Object
+
+After the attacker ran `Get-ADObject -Filter 'Name -like "*"' -Server DC01 | findstr "ADFS"` command retrieves all objects from the domain controller and filters them for ADFS components. 
+
+<img src="/assets/img/as48.png" alt="" />
+
+This step is typically part of a DKM (Distributed Key Manager) extraction process, which is required for ADFS database decryption and token-signing key theft.
+
+### Export DKIM
+
+Once the ADFS object was found, the attacker executed a series of PowerShell commands to retrieve the thumbnailphoto attribute, which stores the DKM key used by ADFS.
+
+<img src="/assets/img/as49.png" alt="" />
+
+The extracted key data was converted to a readable string using `[System.BitConverter]::ToString($key)`. This step is a clear indicator that the attacker was preparing to export the ADFS private key, which could later be used to perform a Golden SAML attack by forging authentication tokens.
+
+### Export ADFS Configuration
+
+While analyzing the PowerShell activity on the ADFS server, I observed a sequence of commands that clearly indicate enumeration and data extraction from the ADFS configuration database. 
+
+<img src="/assets/img/as50.png" alt="" />
+
+The attacker first queried the `SecurityTokenService` class using `Get-WmiObject` to retrieve the ADFS configuration database connection string. Using this connection string, a SQL client object was instantiated and a connection to the database was opened.
+
+The attacker then executed the query:
+
+```powershell
+SELECT ServiceSettingsData FROM IdentityServerPolicy.ServiceSettings
+```
+This query was used to dump the service settings data from the ADFS configuration. Finally, the results were read from the SQL data reader and stored in a variable for later use. This sequence of commands shows a deliberate attempt to extract sensitive ADFS configuration information.
+
+After retrieving the connection string from the ADFS `SecurityTokenService` namespace, the next step involved using it to establish a connection to the ADFS configuration database. A new SQL client object was initialized with the connection string, and a query was prepared to read the `ServiceSettingsData` from the `IdentityServerPolicy.ServiceSettings` table.
+
+<img src="/assets/img/as51.png" alt="" />
+
+The query results revealed the full XML data for the ADFS service configuration. This output contained token-signing certificates, encryption keys, and other sensitive configuration details. The presence of these commands in the transcript indicates that the attacker had successfully accessed and enumerated ADFS configuration data.
+
+### Export Token Signing Certificate
+
+The investigation then revealed that the attacker exported the ADFS token-signing certificate. 
+
+<img src="/assets/img/as52.png" alt="" />
+
+The PowerShell transcript showed that the decrypted certificate bytes were written to a `.pfx` file under `C:\ProgramData\`, using a filename format that included the certificate type and timestamp (e.g., `ADFS_signing_2023-04-10T13462599.pfx`). This action confirms that the attacker successfully extracted the signing certificate from the ADFS server — a critical step that would allow them to forge valid SAML tokens and impersonate any user within the environment (Golden SAML attack).
+
+### Get User ObjectGUD
+
+During this phase, the attacker queried Active Directory to gather information on the user account henry, retrieving details such as the ObjectGUID. 
+
+<img src="/assets/img/as53.png" alt="" />
+
+They then converted this GUID into Base64 format using PowerShell. This step is significant because converting the ObjectGUID to Base64 is a common prerequisite for forging SAML tokens. By doing this, the attacker was clearly preparing to impersonate this user and leverage forged SAML tokens to escalate privileges in the environment.
+
+### Forged SAML Token
+
+Continuing my investigation, I reviewed the attacker’s next actions and observed that they had already gathered all the critical components required for forging a SAML token.
+
+These included the user’s,
+
+- **ObjectGUID (converted to Base64)**
+- **AD FS Token Signing Certificate (exported earlier)** 
+- **DKM keys**
+- **AD FS Issuer URL.**
+
+With these components in hand, the attacker proceeded to forge a SAML token.
+
+<img src="/assets/img/as54.png" alt="" />
+
+<img src="https://i.imgflip.com/a62iq7.jpg" alt="" />
+
+This activity is clearly visible in the PowerShell history, where the attacker used the `New-AADIntSAMLToken` cmdlet with the Base64-encoded `ImmutableID`, the `PFX` certificate, and the `issuer URL`. The output shows a fully generated SAML assertion, confirming that the attacker successfully created a forged token.
+
+## OAuth Abuse
+
+Continuing with my investigation, I turned my attention to potential OAuth abuse. By examining the audit logs, I confirmed multiple instances of the `Consent to application` activity, some showing a successful result.
+
+<img src="/assets/img/as55.png" alt="" />
+
+These entries revealed that both the legitimate OfficeApplication and a suspicious application hosted at www.myo365.site were granted permissions by users, including `winston@assassinkitty.com` and `henry@assassinkitty.com`.
+
+And we can see that the permissions granted include `Mail.ReadWrite`, `Mail.Send`, `User.Read`, and `User.ReadBasic.All`, along with offline_access, openid, and profile. These permissions provide the application with significant access to the user’s mailbox and profile data.
+
+<img src="/assets/img/as56.png" alt="" />
+
+Given this level of access, the attacker could potentially read, modify, or send emails on behalf of the compromised user account, which aligns with OAuth abuse techniques commonly seen post-compromise.
+
+Next, I pivoted to the `Add service principal` activity logs to understand how the attacker might have leveraged OAuth abuse. I noticed that the OfficeApplication service principal had a redirect URI pointing to `https://20.92.20.220:5000/getAuthToken`.
+
+<img src="/assets/img/as57.png" alt="" />
+
+This is an important finding because it confirms that the attacker registered or modified a malicious redirect URI to capture tokens. The activity was marked as successful, which means the modification was applied and could have allowed the attacker to exfiltrate authentication tokens from users or services interacting with this application.
+
+## Email Compromise
+
+Continuing my investigation, I reviewed the PowerShell transcript logs for the user account `winston` I observed that the attacker downloaded and silently installed the Azure CLI on the ADFS server by using the `Invoke-WebRequest` cmdlet with the official Microsoft URL (`https://aka.ms/installazurecliwindows`). The command then executed `msiexec.exe` with the `/quiet` flag to perform an unattended installation, followed by cleanup of the installer file.
+
+<img src="/assets/img/as58.png" alt="" />
+
+This behavior is a strong indicator that the attacker was preparing for post-exploitation cloud operations. Installing the Azure CLI would allow them to programmatically interact with Azure AD.
+
+While reviewing the PowerShell transcript logs, I observed that the attacker used the `az login` command to authenticate to Azure. The login flow redirected to Microsoft’s OAuth2 endpoint and allowed device code flow if needed. Since no accessible subscriptions were linked to the account, the attacker used the `--allow-no-subscriptions` flag to gain tenant-level access. 
+
+<img src="/assets/img/as59.png" alt="" />
+
+This step confirms that the attacker successfully authenticated and was preparing to enumerate resources and potentially perform actions in the Azure tenant environment.
+
+Following authentication, they executed several enumeration commands such as `az vm list`, `az webapp list`, `az functionapp list`, and `az storage account list`, which all failed due to the lack of a subscription context. However, the `az keyvault list` command executed successfully and returned results (empty or otherwise), showing that the attacker was specifically looking for sensitive resources.
+
+<img src="/assets/img/as60.png" alt="" />
+
+This activity clearly indicates post-compromise cloud reconnaissance, likely with the goal of identifying exploitable Azure resources.
+
+Office365 logs confirms that after compromising the account, the attacker attempted to send multiple emails using Winston’s account. 
+
+<img src="/assets/img/as61.png" alt="" />
+
+All messages originated from the same external IP address (`49.181.135.123`) and were sent from the Drafts folder, which is a common indicator of malicious email automation (such as via Outlook rules or scripts). 
+
+When I searched for the same email subject in the Office 365 logs, I found that the account `sombra@assassinkitty.com` was actively involved — it both replied to and forwarded the email thread.
+
+<img src="/assets/img/as62.png" alt="" />
+
+While reviewing the UAL log export and message trace reports, I noticed that this email with the subject “Introductions” was sent to `sombra@assassinkitty.com`. To investigate further, I used `Xst Reader` to open the mailbox data from the UAL log folder. Inside the mailbox, I found that sombra attempted to reply to Winston’s email and also forwarded the message.
+
+<img src="/assets/img/as63.png" alt="" />
+
+<img src="/assets/img/as64.png" alt="" />
+
+This confirmed that the attacker’s malicious email, containing the phishing link, successfully reached the user’s inbox and triggered a reply, indicating potential engagement with the phishing content.
+
+## Defense Evasion
+
+I discovered that the attacker used PowerShell to tamper with Microsoft Defender Antivirus settings. They executed the command `Set-MpPreference -DisableRealtimeMonitoring $true`, which effectively disabled Defender’s real-time protection. 
+
+<img src="/assets/img/as65.png" alt="" />
+
+This command was run on both DC01 and PC01 under the account “henry.” The activity strongly suggests the attacker was deliberately weakening defenses on multiple systems to remain undetected and carry out further actions.
+
+## Timestomping
+
+The attacker used an anti-forensic technique known as timestomping on multiple web shells. Timestomping is used to manipulate file timestamps, making it harder for investigators to determine when a file was actually created or modified.
+
+<img src="/assets/img/as66.png" alt="" />
+
+```powershell
+> .\AppExtension.exe -F "C:\Program Files\Microsoft\Exchange Server\V15\FrontEnd\HttpProxy\owa\auth\6XgVzNz5bd6.aspx" -M "2021-02-20 17:56:34.6476253" -A "2021-02-20 17:56:34.6476253" -C "2021-02-20 17:56:34.6476253" -B "2021-02-20 17:56:34.6476253"
+> .\AppExtension.exe -F "C:\Program Files\Microsoft\Exchange Server\V15\FrontEnd\HttpProxy\owa\auth\kzNpYqWU6R.aspx" -M "2021-02-20 17:56:34.6476253" -A "2021-02-20 17:56:34.6476253" -C "2021-02-20 17:56:34.6476253" -B "2021-02-20 17:56:34.6476253"
+> .\AppExtension.exe -F "C:\Program Files\Microsoft\Exchange Server\V15\FrontEnd\HttpProxy\owa\auth\MhPISv1vQWF.aspx" -M "2021-02-20 17:56:34.6476253" -A "2021-02-20 17:56:34.6476253" -C "2021-02-20 17:56:34.6476253" -B "2021-02-20 17:56:34.6476253"
+> .\AppExtension.exe -F "C:\Program Files\Microsoft\Exchange Server\V15\FrontEnd\HttpProxy\owa\auth\PAZvNLKDE.aspx" -M "2021-02-20 17:56:34.6476253" -A "2021-02-20 17:56:34.6476253" -C "2021-02-20 17:56:34.6476253" -B "2021-02-20 17:56:34.6476253"
+```
+In this case, the attacker leveraged `AppExtension.exe` to set identical creation, modification, and access times on the malicious web shells
+
+<img src="/assets/img/as67.png" alt="" />
+
+This Timeline Explorer output confirms the timestomping activity. The Standard Information (`SI`) creation timestamp (`0x10`) shows a date from 2021, making it appear as though the files have been present in the environment for a long time.
+
+However, the FileName (`FN`) creation timestamp (0x30), which is much harder to manipulate without kernel-level access, shows a date from April 2023 — perfectly aligning with the attacker’s activity window. This mismatch strongly indicates that the threat actor intentionally altered the `SI` timestamps to hide the true creation time of these malicious web shells and evade detection during forensic review.
+
+During my investigation of the PowerShell console history on `Mail01`, I found evidence of the attacker using `sdelete64.exe` from the `C:\Windows\Temp\Tools` directory. This utility is a Sysinternals tool used to securely delete files, ensuring they cannot be recovered.
+
+<img src="/assets/img/as69.png" alt="" />
+
+The attacker specifically used it to wipe traces of `Invoke-WMiexec.ps1` and `AppExtension.exe`, which were earlier used for lateral movement and timestomping activities. This strongly suggests that the threat actor was actively performing anti-forensic actions to cover their tracks and hinder further investigation.
+
+### Registry Timestomping
+
+While investigating the PowerShell console history on Mail01, I found evidence that the attacker used `adbapi.exe`, a tool designed to manipulate registry key timestamps.
+
+<img src="/assets/img/as70.png" alt="" />
+
+<img src="/assets/img/as71.png" alt="" />
+
+The commands reveal that they specifically targeted:
+
+```powershell
+HKLM\Software\Microsoft\Windows\CurrentVersion\Run
+HKLM\Software\Microsoft\Windows\CurrentVersion\SilentProcessExit
+HKLM\Software\Windows NT\CurrentVersion\Image File Execution 
+ ```
+This strongly suggests the attacker was performing registry timestomping to make persistence entries look older and blend in with legitimate system activity. By correlating this with other events, I confirmed that these timestamp modifications aligned with the attacker’s activity window.
+
+## Exfiltration
+
+I focused on evidence related to data exfiltration tools. Using Event ID 4688 and searching for the keyword `megasync` I discovered that the user account `winston` executed both `MEGAsyncSetup64.exe` and `MEGAsync.exe` on `PC02`. Further examination revealed that the installation file `MEGAsyncSetup64.exe` was located in the Desktop directory of PC02, confirming that the application was manually installed.
+
+<img src="/assets/img/as73.png" alt="" />
+
+This activity is a strong indicator that the attacker leveraged MEGAsync as a potential exfiltration channel to move data outside the network.
+
+Additionally, I identified that MEGAsync maintains logs under `C:\Users\winston\AppData\Local\Mega Limited\MEGAsync\logs`. Collecting and analyzing these logs can provide deeper insight into which files were synced and at what time, helping confirm whether data exfiltration occurred.
+
+<img src="/assets/img/as72.png" alt="" />
+
+Continuing with the investigation, I analyzed the MEGAsync logs to verify whether the tool was used for exfiltration. By searching for the string `Adding file to upload queue`, I was able to identify the exact files queued for upload, which included sensitive assets such as
+
+```yml
+- AssassinkittyDemo.jpg
+- blueprints.txt
+- kittyDB.json
+- TLP Red Secrets.txt
+- Train a cat to kill.docx
+```
+
+This confirmed that the attacker was staging critical data for exfiltration.
+
+To further confirm the data transfer, I searched for the string `Upload complete` within the same logs. This revealed that all the staged files were successfully uploaded to the MEGA cloud storage, leaving no doubt that the attacker exfiltrated a significant amount of sensitive information from the network.
+
+And also identified the email address used in this activity from MEGAsync logs.
+
+<img src="/assets/img/as74.png" alt="" />
+
+During the analysis of `MEGAsync` and `OneDrive` activity, I identified that OneDrive was present on multiple systems. However, only DC01 had the installation file executed from the Desktop directory under the user account `winston`
+
+<img src="/assets/img/as75.png" alt="" />
+
+I proceeded to analyze the `NTUSER.DAT` registry hive for `winston` and located the key path `Software\Microsoft\OneDrive\Accounts\Personal`, which contained the UserEmail value. Interestingly, the email address found here matched the same email observed in the `MEGAsync` logs, confirming that the same account was being used across both services.
+
+This correlation further strengthens the evidence that the threat actor was leveraging both `MEGAsync` and `OneDrive` for data exfiltration from the compromised environment.
+
+## Conclusion
+
+That brings this case to a close. This investigation was a deep dive through multiple attack stages — from disabling security controls to credential dumping, lateral movement, token forgery, and finally, data exfiltration via `MEGAsync` and `OneDrive`. Each step left behind a clear trail of forensic evidence that, when correlated, revealed the full attack chain.
+
+What stands out the most is how the attacker combined multiple techniques — timestomping to hide web shell artifacts, registry timestamp manipulation with `adbapi.exe`, `SAML token` forgery using stolen AD FS keys, and stealthy exfiltration through legitimate cloud tools. By piecing together PowerShell transcripts, event logs, and registry hives, we could not only reconstruct the attacker’s actions but also identify their objectives with precision.
+
+A special thanks to [@XINTRA](https://www.xintra.org/) for building such a realistic scenario — every artifact was meaningful and forced me to pivot intelligently at each step. This case was an excellent exercise in threat hunting, log correlation, and forensic analysis.
+
+For anyone diving into similar investigations, keep following the trails — process creation logs, registry changes, PowerShell history, and cloud application audit logs are your best friends. Threat actors might try to cover their tracks, but as we’ve seen, with careful correlation and persistence, you can still catch them.
+
+## Let’s Connect
+
+If you have any feedback on my analysis, methodology, or investigative approach to this lab, I’d love to hear from you. Whether it’s suggestions for improving my process, alternative hunting techniques, or better ways to structure the investigation — feel free to reach out!
+
+You can find me on Discord at @m3r1.t — always happy to connect with fellow analysts and learn from different perspectives. 🙌
+
+<img src="/assets/img/acert.png" alt="" />
+
+## Sources
+
+- [https://www.hackthebox.com/blog/how-to-detect-psexec-and-lateral-movements](https://www.hackthebox.com/blog/how-to-detect-psexec-and-lateral-movements)
+- [https://cloud.google.com/blog/topics/threat-intelligence/pst-want-shell-proxyshell-exploiting-microsoft-exchange-servers](https://cloud.google.com/blog/topics/threat-intelligence/pst-want-shell-proxyshell-exploiting-microsoft-exchange-servers)
+- [https://data.iana.org/TLD/tlds-alpha-by-domain.txt](https://data.iana.org/TLD/tlds-alpha-by-domain.txt)
+- [https://www.keysight.com/blogs/en/tech/nwvs/2022/08/29/proxyshell-deep-dive-into-the-exchange-vulnerabilities](https://www.keysight.com/blogs/en/tech/nwvs/2022/08/29/proxyshell-deep-dive-into-the-exchange-vulnerabilities)
+- [https://www.garykessler.net/library/file_sigs.html](https://www.garykessler.net/library/file_sigs.html)
+- [https://www.sygnia.co/threat-reports-and-advisories/golden-saml-attack](https://www.sygnia.co/threat-reports-and-advisories/golden-saml-attack)
+- [https://www.cyberengage.org/post/2-onedrive-forensics-investigating-cloud-storage-on-windows-systems](https://www.cyberengage.org/post/2-onedrive-forensics-investigating-cloud-storage-on-windows-systems)
+- [https://blog.netwrix.com/2021/11/30/how-to-detect-pass-the-hash-attacks/](https://blog.netwrix.com/2021/11/30/how-to-detect-pass-the-hash-attacks/)
+- [https://redcanary.com/blog/threat-detection/threat-hunting-psexec-lateral-movement/](https://redcanary.com/blog/threat-detection/threat-hunting-psexec-lateral-movement/)
+- [https://aadinternals.com/aadinternals/](https://aadinternals.com/aadinternals/)
+- [https://www.powershellgallery.com/packages/AADInternals/0.2.3/Content/FederatedIdentityTools.ps1](https://www.powershellgallery.com/packages/AADInternals/0.2.3/Content/FederatedIdentityTools.ps1)
