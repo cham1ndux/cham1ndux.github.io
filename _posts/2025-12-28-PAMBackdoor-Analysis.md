@@ -771,3 +771,5 @@ Through this detailed analysis with full command-line examples, we have complete
 Every step of this analysis involved running specific commands to extract information, examining assembly code to understand behavior, and using Python to automate decryption and data extraction. The command-line approach gave us complete control over the analysis and allowed us to verify every finding with concrete evidence from the binary itself.
 
 This is how real malware analysis is performed - not with automated tools that give you a report, but with careful manual investigation, reading assembly code, understanding file formats, and using command-line utilities to extract and analyze data. Each command we ran taught us something new about how this malware works, building up a complete picture of its capabilities and techniques.
+
+A special thanks to [malops.io](https://malops.io) for building such a realistic scenario. This challenge was an excellent exercise in malware analysis and reverse engineering.
