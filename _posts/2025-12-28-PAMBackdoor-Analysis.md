@@ -511,7 +511,7 @@ This gives `0xa428`. Let me see what is there:
 ```bash
 od -A x -t c -N 40 -j 0xa428 pam-backdoor
 ```
-<img src="/assets/img/pa18.png" alt="" />
+<img src="/assets/img/pam18.png" alt="" />
 
 The format string is:
 
