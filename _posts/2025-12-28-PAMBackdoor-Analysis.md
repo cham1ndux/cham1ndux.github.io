@@ -316,10 +316,7 @@ touch -r /usr/bin/id /usr/bin/.dbus.log
 Now let me explain why this is absolutely brilliant from an anti-forensics perspective. When a forensics investigator analyzes a compromised system, one of the first things they look for is recently modified files. The reasoning is simple - if the system was compromised yesterday, any malicious files were probably created or modified around that time. Investigators routinely use commands like this:
 
 ```bash
-# Find files modified in the last 7 days
 find /usr -type f -mtime -7
-
-# Or find files modified after a specific date
 find /usr -type f -newermt "2024-12-01"
 ```
 
