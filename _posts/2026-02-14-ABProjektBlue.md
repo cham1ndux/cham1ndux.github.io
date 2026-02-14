@@ -1,6 +1,6 @@
 ---
 title: Scattered Spider Uncaged - The AB Projekt Blue Investigation
-date: 2026-02-15 00:00:00
+date: 2026-02-14 00:00:00
 categories: [DFIR]
 tags: [dfir]
 pin: false
