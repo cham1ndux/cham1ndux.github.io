@@ -76,15 +76,15 @@ Right away, two suspicious emails jumped out from Maya's inbox — both from `IT
 <img src="/assets/img/ab2.png" alt="" />
 <img src="/assets/img/ab3.png" alt="" />
 
-Email 1 (1:29 AM) - vague social engineering lure, just asking Maya to `finalize some verification process` with no link yet.
-Email 2 (1:33 AM) - the follow-up with the actual phishing URL dropped in:
+- Email 1 (1:29 AM) - vague social engineering lure, just asking Maya to `finalize some verification process` with no link yet.
+- Email 2 (1:33 AM) - the follow-up with the actual phishing URL dropped in:
 `https://login.secureaccesonline.com/iLyXOozI`
 
-Classic two-step phishing play first email builds context, second delivers the payload link. That domain `secureaccesonline.com` is clearly spoofed to mimic a legitimate security portal. And interestingly, we already saw this exact domain in a previous case SPF/DKIM passed because the attacker used Mailgun infrastructure.
+Classic two-step phishing play first email builds context, second delivers the payload link. That domain `secureaccesonline.com` is clearly spoofed to mimic a legitimate security portal. And interestingly, we already saw this exact domain in a previous case `SPF/DKIM` passed because the attacker used Mailgun infrastructure.
 
 <img src="/assets/img/ab4.png" alt="" />
 
-So after pulling the headers out of XstReader, we could clearly see the sending IP was `141.193.32.19` routed through` m32-19.eu.mailgun.net`. The attacker used Mailgun's EU infrastructure. Sender is `itsecurity@secureaccesonline.com` delivered to `maya@abprojektblue.onmicrosoft.com`.
+So after pulling the headers out of `XstReader`, we could clearly see the sending IP was `141.193.32.19` routed through` m32-19.eu.mailgun.net`. The attacker used Mailgun's EU infrastructure. Sender is `itsecurity@secureaccesonline.com` delivered to `maya@abprojektblue.onmicrosoft.com`.
 What caught our eye was that `SPF, DKIM, DMARC` all passed because the attacker properly configured the domain with Mailgun, so Microsoft let it through clean, straight to inbox.
 
 Message-ID is `<20250721013314.e1743b0cb048aa19@secureaccesonline.com>` and the Return-Path shows standard Mailgun bounce tracking format, which confirms this was a deliberate campaign.
@@ -101,11 +101,11 @@ So looking deeper into that log entry, we can see the attacker registered AppCod
 
 <img src="/assets/img/ab6.png" alt="" />
 
-That's a smart move on their part. By choosing AppCodeOnly, they avoid sending any push alerts to Maya's real device, meaning she would have no idea someone else just added an MFA method to her account. This is very consistent with Scattered Spider's known TTPs, where they quietly register a silent authenticator to maintain long term persistence without triggering any suspicion.
+That's a smart move on their part. By choosing `AppCodeOnly`, they avoid sending any push alerts to Maya's real device, meaning she would have no idea someone else just added an MFA method to her account. This is very consistent with Scattered Spider's known TTPs, where they quietly register a silent authenticator to maintain long term persistence without triggering any suspicion.
 
 So at this point the attacker has valid credentials plus their own MFA registered. They now own the account. Let's move forward and see what they actually did once they were inside.
 
-So moving forward in the timeline, we can see the attacker started working with Azure CLI through cmd.exe. The commands being executed were az.cmd ssh config and az.cmd ssh vm, both consistently targeting resource group `RG-LAB-ABPB-WESTUS2-PROD` and VM `ehvr5d-ABPB-dev01`.
+So moving forward in the timeline, we can see the attacker started working with Azure CLI through `cmd.exe`. The commands being executed were az.cmd ssh config and `az.cmd` ssh vm, both consistently targeting resource group `RG-LAB-ABPB-WESTUS2-PROD` and VM `ehvr5d-ABPB-dev01`.
 
 <img src="/assets/img/ab7.png" alt="" />
 
@@ -113,11 +113,11 @@ What's interesting here is the pattern. Starting from Jul 20 they were already r
 
 This confirms the attacker moved laterally from Maya's compromised account into the cloud infrastructure and established a reliable SSH tunnel into the production VM for persistent access.
 
-So digging into the artifacts from ABPB-WKS03, we found the actual SSH keys the attacker generated. Inside `C:\Labs\Evidence\ABProjektBlue\Additional Artifacts\ABPB-WKS03\priya\az_ssh_config\RG-LAB-ABPB-WESTUS2-PROD-ehvr5d-ABPB-dev01\` there are three files, `id_rsa`, `id_rsa.pub`, and `id_rsa.pub-aadcert.pub`.
+So digging into the artifacts from `ABPB-WKS03`, we found the actual SSH keys the attacker generated. Inside `C:\Labs\Evidence\ABProjektBlue\Additional Artifacts\ABPB-WKS03\priya\az_ssh_config\RG-LAB-ABPB-WESTUS2-PROD-ehvr5d-ABPB-dev01\` there are three files, `id_rsa`, `id_rsa.pub`, and `id_rsa.pub-aadcert.pub`.
 
 <img src="/assets/img/ab8.png" alt="" />
 
-Opening up id_rsa.pub we can clearly see at the end of the key the comment `priya@ABPB-WKS03`. This tells us the SSH key pair was generated from the user priya's profile on workstation `ABPB-WKS03`, and was used to authenticate directly into the Azure VM `ehvr5d-ABPB-dev01`.
+Opening up `id_rsa.pub` we can clearly see at the end of the key the comment `priya@ABPB-WKS03`. This tells us the SSH key pair was generated from the user priya's profile on workstation `ABPB-WKS03`, and was used to authenticate directly into the Azure VM `ehvr5d-ABPB-dev01`.
 So the attacker wasn't just operating from Maya's account. They had moved laterally onto Priya's workstation as well and used her machine to establish the SSH tunnel into the production VM. The compromise is wider than we initially thought.
 
 ## Persistance
@@ -131,11 +131,11 @@ Right after that they wasted no time adding it to three groups: `Administrators`
 
 So at this point the attacker has full control over multiple machines in this environment and has left themselves multiple ways back in. Let's keep digging and see what else they did.
 
-So while filtering Event ID 7045 for newly installed services, we spotted something very suspicious. A service named "killer" was installed on ABPB-WKS03 under the SYSTEM context, with the binary dropped in Priya's Downloads folder at `C:\Users\priya\Downloads\8e92cc393a7f6acda90fff42925c42d2082dad593740ae2698d597dca5d1e7fc.SYS`.
+So while filtering `Event ID 7045` for newly installed services, we spotted something very suspicious. A service named `killer` was installed on `ABPB-WKS03` under the SYSTEM context, with the binary dropped in Priya's Downloads folder at `C:\Users\priya\Downloads\8e92cc393a7f6acda90fff42925c42d2082dad593740ae2698d597dca5d1e7fc.SYS`.
 
 <img src="/assets/img/ab12.png" alt="" />
 
-We took that SHA256 and ran it through our CTI platform and it came back as viragt64.sys, flagged 10/72 vendors on VirusTotal. 
+We took that `SHA256` and ran it through our CTI platform and it came back as `viragt64.sys`, flagged 10/72 vendors on VirusTotal. 
 
 <img src="/assets/img/ab13.png" alt="" />
 
@@ -143,34 +143,34 @@ This is a known vulnerable driver, and the service name `killer` is a big red fl
 
 ## Credential Alchemy
 
-So while going through the PowerShell console history on `ABPB-WKS02` under dmitri's account, we spotted some very telling commands. The attacker first ran Get-LocalUser -Name "dmitri" and `whoami /user` to grab dmitri's SID, then immediately jumped into `SharpDPAPI`.
+So while going through the PowerShell console history on `ABPB-WKS02` under dmitri's account, we spotted some very telling commands. The attacker first ran `Get-LocalUser -Name dmitri` and `whoami /user` to grab dmitri's SID, then immediately jumped into `SharpDPAPI`.
 
 <img src="/assets/img/ab14.png" alt="" />
 
 They ran `.\SharpDPAPI.exe triage` and `.\SharpDPAPI.exe system` to enumerate available DPAPI blobs, then went straight for a specific credential blob at `C:\Users\dmitri\AppData\Local\Microsoft\Credentials\5177A88B92A37B0457FDC29C9B553B3B` using the `blob /in:` flag to decrypt it directly.
 
-This tells us the attacker was after dmitri's stored Windows credentials. SharpDPAPI is commonly used to decrypt browser saved passwords, Windows credential manager entries, and other DPAPI protected secrets without needing to dump LSASS. So they were harvesting credentials to move even further across the environment.
+This tells us the attacker was after dmitri's stored Windows credentials. `SharpDPAPI` is commonly used to decrypt browser saved passwords, Windows credential manager entries, and other DPAPI protected secrets without needing to dump LSASS. So they were harvesting credentials to move even further across the environment.
 
-So digging deeper into the process logs on ABPB-WKS02, we can see the full SharpDPAPI command that was executed from the backdoor Adminstrator account's Downloads folder. The attacker ran:
+So digging deeper into the process logs on `ABPB-WKS02`, we can see the full `SharpDPAPI` command that was executed from the backdoor `Adminstrator` account's Downloads folder. The attacker ran:
 
 `SharpDPAPI.exe masterkeys /sid:S-1-5-21-699825636-2524572522-1776751789-1000 /password:P@ssw0rd /target:C:\Users\dmitri\AppData\Roaming\Microsoft\Protect`
 
 This is very clean. They used the Adminstrator account's known password `P@ssw0rd` combined with dmitri's full SID to decrypt the DPAPI masterkeys stored under dmitri's profile. Once they have those masterkeys, every DPAPI protected credential under dmitri's account is wide open.
 So the attacker essentially used their own backdoor account as the key to unlock dmitri's credential store. Let's keep going and see what they pulled out of it.
 
-So jumping over to the browser history analysis on `ABPB-WKS02`, we can see the attacker was actively searching for PPL bypass tools on `7/23/2025`. They searched for PPLBlade via Bing, landed on the GitHub repo `https://github.com/tastypepperoni/PPLBlade`, browsed around it, and then went straight to the releases page at `https://github.com/tastypepperoni/PPLBlade/releases/tag/v1.0` to grab the binary.
+So jumping over to the browser history analysis on `ABPB-WKS02`, we can see the attacker was actively searching for PPL bypass tools on `7/23/2025`. They searched for `PPLBlade` via Bing, landed on the GitHub repo `https://github.com/tastypepperoni/PPLBlade`, browsed around it, and then went straight to the releases page at `https://github.com/tastypepperoni/PPLBlade/releases/tag/v1.0` to grab the binary.
 
 <img src="/assets/img/ab15.png" alt="" />
 
-PPLBlade is a well known tool designed specifically to bypass Windows Protected Process Light and dump LSASS memory. Combined with the BYOVD driver they dropped earlier with viragt64.sys, this paints a very clear picture. They were building a full credential dumping chain, first kill the EDR with the vulnerable driver, then bypass PPL protection, then dump LSASS to harvest all credentials in memory.
+`PPLBlade` is a well known tool designed specifically to bypass Windows Protected Process Light and dump LSASS memory. Combined with the BYOVD driver they dropped earlier with `viragt64.sys`, this paints a very clear picture. They were building a full credential dumping chain, first kill the EDR with the vulnerable driver, then bypass PPL protection, then dump LSASS to harvest all credentials in memory.
 
-`HackTool:Win32/DumpLsass.AA!dha` to this binary as threat signature.10:19 PMSo that confirms it. Windows Defender flagged `C:\Users\Adminstrator\Downloads\PPLBlade.exe` with the signature `HackTool:Win32/DumpLsass.AA!dha` on `ABPB-WKS02`. The binary was sitting right inside the backdoor Adminstrator account's Downloads folder, same place they dropped SharpDPAPI earlier.
+`HackTool:Win32/DumpLsass.AA!dha` to this binary as threat signature. 10:19 PM So that confirms it. Windows Defender flagged `C:\Users\Adminstrator\Downloads\PPLBlade.exe` with the signature `HackTool:Win32/DumpLsass.AA!dha` on `ABPB-WKS02`. The binary was sitting right inside the backdoor Adminstrator account's Downloads folder, same place they dropped `SharpDPAPI` earlier.
 
 <img src="/assets/img/ab16.png" alt="" />
 
 ## Encrypted Endgame
 
-So shifting our focus over to ABPB-WKS03, we went through the contents of the Downloads folder and found multiple suspicious binaries sitting there. One that immediately caught our attention was `main.exe`.
+So shifting our focus over to `ABPB-WKS03`, we went through the contents of the Downloads folder and found multiple suspicious binaries sitting there. One that immediately caught our attention was `main.exe`.
 
 <img src="/assets/img/ab17.png" alt="" />
 
@@ -178,13 +178,15 @@ So let's pop that binary open and run strings against it to see what's hiding in
 
 <img src="/assets/img/ab18.png" alt="" />
 
-So running strings against main.exe gave us exactly what we were looking for. Right there in plaintext we can see the hardcoded ransom note content starting with `>>> YOUR NETWORK HAS BEEN COMPROMISED <<<` confirming this is without a doubt the ransomware payload.
+So running strings against `main.exe` gave us exactly what we were looking for. Right there in plaintext we can see the hardcoded ransom note content starting with `>>> YOUR NETWORK HAS BEEN COMPROMISED <<<` confirming this is without a doubt the ransomware payload.
+
 What's really interesting is the exclusions list embedded inside the binary. The ransomware was configured to skip 12 directories including `C:\Windows`, `Azure Monitor Agent`, `Elastic Agent`, `Microsoft Monitoring Agent paths`, `Recycle Bin`, `System Volume Information`, `Recovery`, and `WER folders`. 
 
 On the file side it excludes 8 specific filenames: `note.txt`, `log.log`, `AzureMonitorAgent.exe`, `Filebeat.exe`, `elastic-agent.exe`, `MicrosoftMonitoringAgent.exe`, `desktop.ini`, and `thumbs.db`.
+
 It also skips 9 file extensions from encryption: `.exe`, `.dll`, `.sys`, `.log`, `.evtx`, `.txt`, `.pf`, `.tmp`, `and` `.temp`.
 
-So while going through the Desktop on ABPB-WKS03, we found a file named notes.txt which turned out to be the ransom note dropped by the attacker. The note warned the victim not to attempt any file recovery or reach out to third parties.
+So while going through the Desktop on ABPB-WKS03, we found a file named `notes.txt` which turned out to be the ransom note dropped by the attacker. The note warned the victim not to attempt any file recovery or reach out to third parties.
 
 <img src="/assets/img/ab19.png" alt="" />
 
@@ -198,9 +200,9 @@ So continuing our investigation on `ABPB-WKS03`, Windows Defender flagged anothe
 
 <img src="/assets/img/ab20.png" alt="" />
 
-BackStab is a well known tool specifically designed to kill EDR and security agent processes by abusing vulnerable drivers, which ties directly back to the `viragt64.sys` driver we found earlier installed as the "killer" service. The name of the binary itself, `killer.exe`, makes the intent pretty obvious.
+`BackStab` is a well known tool specifically designed to kill EDR and security agent processes by abusing vulnerable drivers, which ties directly back to the `viragt64.sys` driver we found earlier installed as the `killer` service. The name of the binary itself, `killer.exe`, makes the intent pretty obvious.
 
-So they had a full EDR killing chain set up on `ABPB-WKS03`: drop the vulnerable driver via the "killer" service, then use `BackStab` to leverage that driver and terminate any security processes protecting the machine. Let's keep going and see what came after they blinded the defenses.
+So they had a full EDR killing chain set up on `ABPB-WKS03` drop the vulnerable driver via the `killer` service, then use `BackStab` to leverage that driver and terminate any security processes protecting the machine. Let's keep going and see what came after they blinded the defenses.
 
 So we can see the actual execution of `killer.exe` on `ABPB-WKS03` under priya's account. The command run was `killer.exe -n wazuh`, directly targeting the Wazuh security agent by name to terminate it.
 
@@ -209,7 +211,7 @@ So we can see the actual execution of `killer.exe` on `ABPB-WKS03` under priya's
 
 Wazuh is an open source SIEM and EDR agent, so by killing it the attacker effectively blinded the entire security monitoring stack on that machine. No more log forwarding, no more process monitoring, no more alerts going out.
 
-This confirms the sequence: drop viragt64.sys as the "killer" service to load the vulnerable driver, then use BackStab (killer.exe) to leverage that driver and terminate Wazuh specifically.
+This confirms the sequence drop `viragt64.sys` as the `killer` service to load the vulnerable driver, then use BackStab (killer.exe) to leverage that driver and terminate Wazuh specifically.
 
 <img src="/assets/img/ab22.png" alt="" />
 
@@ -217,18 +219,19 @@ So another critical finding tied to this execution was the invocation of `SeLoad
 
 <img src="/assets/img/ab23.png" alt="" />
 
-This is exactly how the whole BYOVD chain worked on this machine. The attacker used `SeLoadDriverPrivilege` to load viragt64.sys into kernel space, giving killer.exe the ability to interact at the kernel level and forcefully terminate protected security processes like Wazuh that would otherwise be untouchable from userland.
+This is exactly how the whole BYOVD chain worked on this machine. The attacker used `SeLoadDriverPrivilege` to load `viragt64.sys` into kernel space, giving killer.exe the ability to interact at the kernel level and forcefully terminate protected security processes like Wazuh that would otherwise be untouchable from userland.
 
 At this point the attacker had full control, no EDR watching, credentials harvested, persistent access established across multiple machines. The environment was completely wide open for the final ransomware deployment.
 
 ## Scattered Portals
 
-So pivoting over to ABPB-WKS01, we pulled the AnyDesk logs and found something very familiar. The log clearly shows Logged in from 37.231.101.228:26620 on relay `e80d2c46`, and that IP `37.231.101.228` is the exact same one we saw back when the attacker registered the rogue MFA authenticator under Maya's account.
+So pivoting over to ABPB-WKS01, we pulled the AnyDesk logs and found something very familiar. The log clearly shows Logged in from `37.231.101.228:26620` on relay `e80d2c46`, and that IP `37.231.101.228` is the exact same one we saw back when the attacker registered the rogue MFA authenticator under Maya's account.
 
 <img src="/assets/img/ab24.png" alt="" />
 
 This is a solid confirmation that we are tracking the same threat actor throughout this entire intrusion. They used AnyDesk as an additional remote access method routed through relay `e80d2c46` to avoid direct connections, landing on the internal address `10.183.3.12` on port `**7070`.
-So the attacker had multiple remote access paths into the environment simultaneously: SSH tunnels into the Azure VM, RDP via the backdoor Adminstrator account, and now AnyDesk on ABPB-WKS01. They were making sure they had every possible way back in.
+
+So the attacker had multiple remote access paths into the environment simultaneously: SSH tunnels into the Azure VM, RDP via the backdoor Adminstrator account, and now AnyDesk on `ABPB-WKS01`. They were making sure they had every possible way back in.
 
 <img src="/assets/img/ab25.png" alt="" />
 
@@ -236,19 +239,19 @@ So looking deeper into the same AnyDesk log entry, we can pull out two more crit
 
 The FPR is particularly valuable here because unlike IP addresses that can change, the Client Fingerprint stays consistent across different victims and sessions. This means if this same attacker hits another organization using AnyDesk, that FPR `b80684e1e6d2` can be used to directly link the activity back to the same threat actor machine, making it a strong attribution indicator to share in threat intel reports.
 
-So while going through the PowerShell transcripts on `ABPB-WKS02`, we spotted the attacker using Chocolatey to install ngrok via `C:\ProgramData\chocolatey\choco.exe` install ngrok under Process ID `9392`.
+So while going through the PowerShell transcripts on `ABPB-WKS02`, we spotted the attacker using Chocolatey to install `ngrok` via `C:\ProgramData\chocolatey\choco.exe` install `ngrok` under Process ID `9392`.
 
 <img src="/assets/img/ab26.png" alt="" />
 
 Using Chocolatey here is a smart move on their part. It's a legitimate Windows package manager so it blends in with normal admin activity and is less likely to trigger alerts compared to directly downloading a binary from the internet. ngrok then gives them an encrypted reverse tunnel out of the environment, creating yet another persistent external access channel that's difficult to block since it tunnels over standard HTTPS.
 
-This is a well documented Scattered Spider TTP. They consistently abuse legitimate tools like Chocolatey and ngrok to maintain stealthy persistent access while avoiding detection.
+This is a well documented Scattered Spider TTPs. They consistently abuse legitimate tools like Chocolatey and ngrok to maintain stealthy persistent access while avoiding detection.
 
-So right after installing ngrok, we can see the attacker immediately authenticated it using `ngrok.exe config add-authtoken with the token 2uSsg9WbMZ7Vxwx9qbDdMQ4Ear7_5jEkcWxqLmYrEiZ8v3oe7` on `ABPB-WKS02`.
+So right after installing `ngrok`, we can see the attacker immediately authenticated it using `ngrok.exe config add-authtoken with the token 2uSsg9WbMZ7Vxwx9qbDdMQ4Ear7_5jEkcWxqLmYrEiZ8v3oe7` on `ABPB-WKS02`.
 
 <img src="/assets/img/ab27.png" alt="" />
 
-This authtoken ties the ngrok tunnel directly back to the attacker's ngrok account. That token is a solid IOC worth flagging, as it can be used to identify other infrastructure or sessions linked to the same ngrok account across different victim environments.
+This authtoken ties the `ngrok` tunnel directly back to the attacker's ngrok account. That token is a solid IOC worth flagging, as it can be used to identify other infrastructure or sessions linked to the same ngrok account across different victim environments.
 
 ## Extraction Point
 
@@ -269,7 +272,7 @@ The destination `do-sftp` strongly suggests they were exfiltrating to a DigitalO
 
 <img src="/assets/img/ab30.png" alt="" />
 
-We also caught them running `rclone.ex`e obscure `P@ssw0rd123!!!` twice, which is rclone's built-in command to encode a plaintext password for use in config files. This means their SFTP authentication password was `P@ssw0rd123!!!` before encoding.
+We also caught them running `rclone.exe` obscure `P@ssw0rd123!!!` twice, which is rclone's built-in command to encode a plaintext password for use in config files. This means their SFTP authentication password was `P@ssw0rd123!!!` before encoding.
 
 So the full exfiltration picture is clear. They archived priya's Code directory into `cyberfunk.rar`, then used rclone over SFTP to push it out to their DigitalOcean server before triggering the ransomware encryption.
 
@@ -285,13 +288,13 @@ So during static analysis of rclone.exe pulled from `ABPB-WKS03`, we identified 
 
 This is useful for anyone doing deeper reverse engineering on this sample, as it gives us the exact offset to start tracing execution flow and understanding how the attacker may have modified or configured this build of rclone.
 
-So shifting over to the SharePoint audit logs, we can see the attacker was hitting `https://abprojektblue.sharepoint.com/sites/CyberFunk/` and bulk downloading files from the `Engineering/Documentation` directories including `APIs`, `Architecture`, and Technical folders across both 2023 and 2025 content.
+So shifting over to the SharePoint audit logs, we can see the attacker was hitting `https://abprojektblue.sharepoint.com/sites/CyberFunk/` and bulk downloading files from the `Engineering/Documentation` directories including `APIs`, `Architecture`, and `Technical folders` across both 2023 and 2025 content.
 
 <img src="/assets/img/ab33.png" alt="" />
 
-What gives them away immediately is the user-agent string `python-requests/2.31.0`. No legitimate user browses SharePoint with a raw Python requests library. This confirms the attacker was running a custom Python script, likely leveraging the Microsoft Graph API, to programmatically enumerate and bulk download the entire SharePoint site contents.
+What gives them away immediately is the user-agent string `python-requests/2.31.0`. No legitimate user browses SharePoint with a raw Python requests library. This confirms the attacker was running a custom Python script, likely leveraging the `Microsoft Graph API`, to programmatically enumerate and bulk download the entire SharePoint site contents.
 
-With 101 documents logged as FileDownloaded events, this was a systematic sweep of the company's engineering documentation. Combined with the rclone exfiltration we saw earlier, the attacker had a very structured double exfiltration approach, SharePoint data out via Python script and local files out via rclone over SFTP.
+With `101` documents logged as `FileDownloaded` events, this was a systematic sweep of the company's engineering documentation. Combined with the rclone exfiltration we saw earlier, the attacker had a very structured double exfiltration approach, SharePoint data out via Python script and local files out via rclone over SFTP.
 
 So digging into the AnyDesk artifacts on `ABPB-WKS02` under dmitri's profile, we found a `file_transfer_trace` log inside the `ad_f45e5af2_msi` folder. This trace file reveals the attacker used AnyDesk's clipboard file transfer feature to pull two files off the compromised machine during their remote session.
 
@@ -299,11 +302,11 @@ So digging into the AnyDesk artifacts on `ABPB-WKS02` under dmitri's profile, we
 
 At 02:23 they downloaded `public.key` (32 B) and `main.exe` (3.32 MiB), then repeated the exact same transfer again at 02:26. The fact that they transferred `main.exe` through AnyDesk confirms this is how the ransomware binary was delivered and staged onto the machine, dropped directly via the AnyDesk clipboard transfer rather than downloading from an external URL, making it much harder to detect at the network level.
 
-So while going through the RDP bitmap cache artifacts from ABPB-WKS02 under dmitri's Terminal Server Client profile, we processed the cache files through BMC-Tools which generated over 12,000 images in the output folder. After sorting by size we zeroed in on Cache0001.bin_collage and opened it up in Paint.
+So while going through the RDP bitmap cache artifacts from `ABPB-WKS02` under dmitri's Terminal Server Client profile, we processed the cache files through `BMC-Tools` which generated over 12,000 images in the output folder. After sorting by size we zeroed in on Cache0001.bin_collage and opened it up in `Paint`.
 
 <img src="/assets/img/ab35.png" alt="" />
 
-Right there in the reconstructed RDP session screenshot we can clearly see the project directory name ABProjektBlue displayed prominently in the File Explorer title bar and repository browser. This confirms the attacker was actively browsing through the internal development environment and code repositories during their RDP session, giving us a clear visual of exactly what they were looking at inside the compromised environment.
+Right there in the reconstructed RDP session screenshot we can clearly see the project directory name `ABProjektBlue` displayed prominently in the File Explorer title bar and repository browser. This confirms the attacker was actively browsing through the internal development environment and code repositories during their RDP session, giving us a clear visual of exactly what they were looking at inside the compromised environment.
 
 ## Conclusion
 
