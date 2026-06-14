@@ -91,7 +91,7 @@ After confirming that the phishing email delivered the archive `CargoPortalRevie
 
 As the first step, we focused on analyzing ог`ляд вантажу, деталі вантажу.docm`, since this document was directly observed in the parent process chain that launched PowerShell. This made it the primary suspect for the initial macro execution and payload deployment activity observed on `GFUA-WKS01`.
 
-### Analysis of `ляд вантажу, деталі вантажу.docm`
+### Analysis of ляд вантажу, деталі вантажу.docm
 
 We analyzed the macro-enabled document `огляд вантажу, деталі вантажу.docm` using olevba to understand its embedded VBA behavior. The analysis revealed that the document contained an obfuscated VBA macro designed to execute automatically when the document was opened. This was achieved through the use of AutoOpen and `Document_Open` functions, both of which called the main macro routine.
 
@@ -113,7 +113,7 @@ The code comments and behavior suggest a staged payload execution flow. The macr
 
 Overall, the macro analysis confirmed that `огляд вантажу, деталі вантажу.docm` was malicious. It was designed to evade analysis, extract additional payloads, execute them using PowerShell and Windows scripting, and remove traces of execution. This finding supports the earlier timeline showing that the phishing email attachment was the initial access vector used to compromise `GFUA-WKS01`.
 
-### Analysis of `Оновлення Порталу Логістики – Міністерство Інфраструктури України.docm` Analysis
+### Analysis of Оновлення Порталу Логістики – Міністерство Інфраструктури України.docm Analysis
 
 We then analyzed the second macro-enabled document, Оновлення Порталу Логістики – Міністерство Інфраструктури України.docm, to determine whether it contained additional malicious functionality.
 
@@ -161,7 +161,7 @@ Further investigation identified a second persistence mechanism using Windows Sc
 
  By leveraging both a startup registry key and a scheduled task, the attacker increased the likelihood that the malware would remain active even if one persistence mechanism was discovered and removed.
 
-### Command and Control
+## Command and Control
 
  To better understand the capabilities of the deployed payload, we performed additional analysis on `svc.exe`. Initial indicators suggested that the executable was not a simple standalone malware sample but rather a command-and-control (C2) agent designed to provide remote access to the attacker.
 
@@ -401,3 +401,13 @@ The intrusion extended beyond traditional IT assets, with evidence showing unaut
 Finally, analysis of PowerShell scripts and network activity revealed a dedicated exfiltration workflow masquerading as a backup service. Sensitive data was compressed, staged locally, and uploaded to attacker-controlled infrastructure via HTTP. SRUM network usage records further confirmed significant outbound data transfers associated with the malware during the intrusion period.
 
 Overall, the attack demonstrates a well-structured intrusion lifecycle involving spearphishing, malicious document execution, command-and-control communications, persistence, reconnaissance, lateral movement, AD CS abuse, credential theft, surveillance access, data collection, and exfiltration. The observed techniques closely align with publicly documented tradecraft associated with APT28-style operations, where long-term access, credential abuse, intelligence gathering, and theft of sensitive organizational data are primary objectives.
+
+A huge shoutout to the team behind [@XINTRA](https://www.xintra.org/) for creating a lab this detailed. Every log felt authentic, every artifact useful, and every pivot led to something meaningful. Massive thanks to all the analysts, red teamers, and reverse engineers who continue to raise the bar in adversary emulation and detection.
+
+## 📬 Let’s Connect
+
+If you have any feedback on my analysis, methodology, or investigative approach to this lab, I’d love to hear from you. Whether it’s suggestions for improving my process, alternative hunting techniques, or better ways to structure the investigation feel free to reach out!
+
+You can find me on Discord at **@m3r1.t** — always happy to connect with fellow analysts and learn from different perspectives. 🙌
+
+<img src="/assets/img/gfuc.png" alt="" />
