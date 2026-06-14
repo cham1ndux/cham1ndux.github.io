@@ -18,11 +18,15 @@ This lab is modeled on tradecraft associated with APT28, the Russian GRU-linked 
 
 - https://www.cisa.gov/news-events/cybersecurity-advisories/aa25-141a
 
+## CONTRIBUTORS:
+- Adversarial Emulator Team: [@ZephrFish](https://www.linkedin.com/in/norecruiters/)
+- Incident Responder: [@r3nzsec](https://www.linkedin.com/in/renzoncruz/)
+
 ## SCOPING NOTE
 
-Global Freight UA is a high-value espionage target because it coordinates Ukraine-bound freight, stores partner and contract information, maintains logistics records in SQL, and uses camera infrastructure to monitor physical movement and border-related activity. In this lab, defenders are responding to suspicious activity observed between January 21, 2026 and January 25, 2026 across GFUA-WKS01, GFUA-WKS02, GFUA-FS01, GFUA-MSSQL, GFUA-DC01, GFUA-cctv, GFUA-cam01, and supporting proxy telemetry from GFUA-PRX01.
+Global Freight UA is a high-value espionage target because it coordinates Ukraine-bound freight, stores partner and contract information, maintains logistics records in SQL, and uses camera infrastructure to monitor physical movement and border-related activity. In this lab, defenders are responding to suspicious activity observed between January 21, 2026 and January 25, 2026 across `GFUA-WKS01`, `GFUA-WKS02`, `GFUA-FS01`, `GFUA-MSSQL`, `GFUA-DC01`, `GFUA-cctv`, `GFUA-cam01`, and supporting proxy telemetry from `GFUA-PRX01`.
 
-Velociraptor triage collections, ELK, mailbox artifacts, browser artifacts, proxy telemetry, and selected AD CS artifacts are available for analysis. Systems GFUA-elk and GFUA-jump are out of scope.
+Velociraptor triage collections, ELK, mailbox artifacts, browser artifacts, proxy telemetry, and selected AD CS artifacts are available for analysis. Systems `GFUA-elk` and `GFUA-jump` are out of scope.
 
 Note: Any activity associated with the LabAdmin setup account should be treated as lab setup rather than threat activity.
 
@@ -61,15 +65,13 @@ To understand how this PowerShell activity was triggered, we investigated the as
 
 <img src="/assets/img/gf04.png" alt="" />
 
-This behavior strongly suggests that the user opened a malicious Office document, which executed embedded macro code. The macro then launched PowerShell to extract or deploy `svc.exe` into the Office directory. Since Office documents do not normally create executable files through PowerShell, this activity was treated as the likely initial execution stage of the compromise.6
+This behavior strongly suggests that the user opened a malicious Office document, which executed embedded macro code. The macro then launched PowerShell to extract or deploy `svc.exe` into the Office directory. Since Office documents do not normally create executable files through PowerShell, this activity was treated as the likely initial execution stage of the compromise.
 
 To trace the origin of the malicious document, we continued analyzing the file creation events associated with the macro execution chain. The investigation revealed that the macro-enabled document `огляд вантажу, деталі вантажу.docm` was extracted from a ZIP archive named `CargoPortalReview.zip`.
 
 Sysmon file creation logs showed that the document was written to the user's temporary extraction directory shortly after the ZIP archive was accessed. This indicates that the archive was opened and its contents were extracted before the malicious document was executed.
 
 <img src="/assets/img/gf05.png" alt="" />
-
-Sysmon file creation logs showed that the document was written to the user's temporary extraction directory shortly after the ZIP archive was accessed. This indicates that the archive was opened and its contents were extracted before the malicious document was executed.
 
 Further analysis of the ZIP archive's origin revealed that `CargoPortalReview.zip` had been created by `OUTLOOK.EXE` within the user's Outlook cache directory. 
 
@@ -93,7 +95,7 @@ As the first step, we focused on analyzing ог`ляд вантажу, дета�
 
 ### Analysis of ляд вантажу, деталі вантажу.docm
 
-We analyzed the macro-enabled document `огляд вантажу, деталі вантажу.docm` using olevba to understand its embedded VBA behavior. The analysis revealed that the document contained an obfuscated VBA macro designed to execute automatically when the document was opened. This was achieved through the use of AutoOpen and `Document_Open` functions, both of which called the main macro routine.
+We analyzed the macro-enabled document `огляд вантажу, деталі вантажу.docm` using `olevba` to understand its embedded VBA behavior. The analysis revealed that the document contained an obfuscated VBA macro designed to execute automatically when the document was opened. This was achieved through the use of `AutoOpen` and `Document_Open` functions, both of which called the main macro routine.
 
 The macro first performed several environment checks before executing its payload. These checks included verifying the operating system, checking the number of running processes, inspecting the username and computer name, and searching for common analysis tools such as `Wireshark`, `Procmon`, `x64dbg`, `OllyDbg`, `IDA`, and `Fiddler`. These checks indicate that the macro attempted to detect sandbox or analysis environments before continuing execution.
 
@@ -115,7 +117,7 @@ Overall, the macro analysis confirmed that `огляд вантажу, дета�
 
 ### Analysis of Оновлення Порталу Логістики – Міністерство Інфраструктури України.docm Analysis
 
-We then analyzed the second macro-enabled document, Оновлення Порталу Логістики – Міністерство Інфраструктури України.docm, to determine whether it contained additional malicious functionality.
+We then analyzed the second macro-enabled document, `Оновлення Порталу Логістики – Міністерство Інфраструктури України.docm`, to determine whether it contained additional malicious functionality.
 
 The VBA code showed that the macro was configured to execute automatically through the AutoOpen function when the document was opened. Unlike the first document, this macro did not directly extract or execute a payload. Instead, it created a new Outlook calendar appointment using the local Microsoft Outlook application.
 
@@ -165,7 +167,7 @@ Further investigation identified a second persistence mechanism using Windows Sc
 
  To better understand the capabilities of the deployed payload, we performed additional analysis on `svc.exe`. Initial indicators suggested that the executable was not a simple standalone malware sample but rather a command-and-control (C2) agent designed to provide remote access to the attacker.
 
- Using the [Havoc Extractor tool](https://github.com/r3nzsec/havoc-extractor), we extracted and analyzed the embedded configuration from svc.exe. The analysis confirmed that the malware was a Havoc Demon agent, an open-source post-exploitation framework commonly used by red teams and threat actors for command-and-control operations.
+ Using the [Havoc Extractor tool](https://github.com/r3nzsec/havoc-extractor), we extracted and analyzed the embedded configuration from `svc.exe`. The analysis confirmed that the malware was a Havoc Demon agent, an open-source post-exploitation framework commonly used by red teams and threat actors for command-and-control operations.
 
  <img src="/assets/img/gf17.png" alt="" />
 
@@ -175,7 +177,7 @@ Further investigation identified a second persistence mechanism using Windows Sc
 
  The extracted configuration also referenced `AES-128-CBC (HEADLACE)` encryption, indicating that communications between the infected host and the command-and-control server were encrypted. This aligns with the lab scenario's use of `HEADLACE-style` payload staging, where encrypted communications are used to conceal attacker activity and hinder network-based detection.
 
- Based on these findings, we concluded that svc.exe served as the primary command-and-control beacon deployed on GFUA-WKS01. Once executed and persisted on the system, the malware enabled the attacker to maintain remote access, issue commands, deploy additional tooling, and continue post-exploitation activities within the compromised environment.
+ Based on these findings, we concluded that svc.exe served as the primary command-and-control beacon deployed on `GFUA-WKS01`. Once executed and persisted on the system, the malware enabled the attacker to maintain remote access, issue commands, deploy additional tooling, and continue post-exploitation activities within the compromised environment.
 
 ## Discovery & Reconnaissance
 
@@ -219,7 +221,7 @@ Process creation logs showed the execution of a registry modification command th
 
  <img src="/assets/img/gf21.png" alt="" />
 
-The registry value, named ShipmentSchedule, was configured to launch `G:\Service_Updates\ShipmentService.exe` automatically whenever the user logged into the system.
+The registry value, named `ShipmentSchedule`, was configured to launch `G:\Service_Updates\ShipmentService.exe` automatically whenever the user logged into the system.
 
 To determine the extent of the compromise, we searched the event logs for the MD5 hash associated with the malicious payload. This allowed us to identify all systems where the same malware sample had been executed or observed.
 
@@ -241,7 +243,7 @@ Notably, the affected systems included the Domain Controller, File Server, and S
 
 To further validate the spread of the malware, we reviewed the process names associated with the identified MD5 hash across the affected systems. Although the payload maintained the same MD5 hash, it was observed operating under multiple filenames, including `svc.exe`, `ShipmentService.exe`, and `Viewer.exe`.
 
-During the investigation of `GFUA-WKS01`, PowerShell Script Block logs (Event ID 4104) revealed the execution of a network reconnaissance script under the account obondarenko. Analysis of the script showed that it was designed to perform web service enumeration by scanning common web application ports, including `80`, `443`, `8080`, `9090`, and `9001`.
+During the investigation of `GFUA-WKS01`, PowerShell Script Block logs (Event ID 4104) revealed the execution of a network reconnaissance script under the account `obondarenko`. Analysis of the script showed that it was designed to perform web service enumeration by scanning common web application ports, including `80`, `443`, `8080`, `9090`, and `9001`.
 
  <img src="/assets/img/gf24.png" alt="" />
 
@@ -279,13 +281,13 @@ To determine whether the `RemoteAccessUsers` certificate template could have bee
 
 Most notably, the template had the `CT_FLAG_ENROLLEE_SUPPLIES_SUBJECT` flag enabled. This setting allows the certificate requester to supply the subject information during enrollment rather than having it automatically populated from Active Directory. In a misconfigured environment, this can allow an attacker to request a certificate on behalf of another user.
 
-The template was also configured for Client Authentication, meaning that any issued certificate could potentially be used for domain authentication through PKINIT or certificate-based logon mechanisms.
+The template was also configured for Client Authentication, meaning that any issued certificate could potentially be used for domain authentication through `PKINIT` or certificate-based logon mechanisms.
 
 Additionally, the template permissions showed that enrollment rights were granted to broad groups, including `Domain Users`. This allowed standard domain accounts, such as the compromised `ichernysh` account, to request certificates using the template without requiring elevated privileges.
 
-Further evidence of certificate template abuse was identified within the attrib records of the Certificate Authority database. These records store the attributes submitted by the certificate requester during the enrollment process.
+Further evidence of certificate template abuse was identified within the `attrib` records of the Certificate Authority database. These records store the attributes submitted by the certificate requester during the enrollment process.
 
-Analysis of the request attributes showed that the certificate was issued using the RemoteAccessUsers template. More importantly, the requester supplied a custom Subject Alternative Name (SAN) value of `upn=dkovalenko@gfua.local`.
+Analysis of the request attributes showed that the certificate was issued using the `RemoteAccessUsers` template. More importantly, the requester supplied a custom Subject Alternative Name (SAN) value of `upn=dkovalenko@gfua.local`.
 
   <img src="/assets/img/gf30.png" alt="" />
 
@@ -322,7 +324,7 @@ The page titles associated with these visits identified the application as Kerbe
 
 <img src="/assets/img/gf34.png" alt="" />
 
-To determine which account was used to access the platform, we examined browser-stored login artifacts. Analysis of the Login Data database, specifically the stats table, revealed an entry associated with `http://10.53.66.23:9001`. The stored username value was identified as root, confirming that the attacker accessed the CCTV platform using the `root` account.
+To determine which account was used to access the platform, we examined browser-stored login artifacts. Analysis of the Login Data database, specifically the stats table, revealed an entry associated with `http://10.53.66.23:9001`. The stored username value was identified as `root`, confirming that the attacker accessed the CCTV platform using the `root` account.
 
 These findings demonstrate that the attacker expanded their access beyond traditional IT systems and gained visibility into the organization's surveillance infrastructure, potentially allowing them to monitor operational activity and gather additional intelligence from the compromised environment.
 
@@ -354,13 +356,13 @@ The SRUM artifacts were recovered from `C:\Windows\System32\sru\` on `GFUA-WKS01
 
 This filtering revealed multiple network usage records tied to `C:\Users\ichernysh\AppData\Local\Microsoft\Office\svc.exe`, spanning several hours after the malware established persistence. The records showed a consistent pattern of outbound network activity, indicating regular communication between the implant and attacker-controlled infrastructure.
 
-Using PowerShell, we filtered the SRUM network usage records for the intrusion timeframe on `2026-01-21` and calculated the total outbound traffic generated by svc.exe.
+Using PowerShell, we filtered the SRUM network usage records for the intrusion timeframe on `2026-01-21` and calculated the total outbound traffic generated by `svc.exe`.
 
 The result showed that `svc.exe` sent a total of` 369,624,295 bytes`, which is approximately `352.50 MB` or `0.34 GB`. This confirms that the malware generated a significant amount of outbound data transfer during the compromise.
 
 <img src="/assets/img/gf39.png" alt="" />
 
-This activity is consistent with command-and-control communication and potential data exfiltration performed by the attacker after persistence was established on GFUA-WKS01.
+This activity is consistent with command-and-control communication and potential data exfiltration performed by the attacker after persistence was established on `GFUA-WKS01`.
 
 ## MITRE ATT&CK Mapping
 
@@ -372,7 +374,7 @@ The observed activity demonstrates strong similarities to publicly reported APT2
 | -------------------- | ------------------------------------------ | -------------------- | ----------------------------------------------- |
 | Initial Access       | Phishing email with CargoPortalReview.zip  | T1566.001            | APT28 frequently uses spearphishing attachments |
 | User Execution       | User opened DOCM and enabled macros        | T1204.002            | Common APT28 delivery method                    |
-| PowerShell Execution | WINWORD.exe → powershell.exe               | T1059.001            | Frequently observed in APT28 malware delivery   |
+| PowerShell Execution | WINWORD.exe -> powershell.exe               | T1059.001            | Frequently observed in APT28 malware delivery   |
 | Defense Evasion      | Sandbox checks, AV enumeration             | T1497, T1518.001     | Similar to HEADLACE and other GRU tooling       |
 | Payload Deployment   | svc.exe (Havoc Demon) dropped              | T1105                | Secondary payload staging                       |
 | Persistence          | Run Key + Scheduled Tasks                  | T1547.001, T1053.005 | Common persistence mechanisms                   |
@@ -384,7 +386,7 @@ The observed activity demonstrates strong similarities to publicly reported APT2
 | Surveillance Access  | Kerberos.io CCTV platform access           | T1083 / Collection   | Intelligence gathering                          |
 | Collection           | Shipment files + CCTV footage              | T1213, T1005         | Data collection                                 |
 | Exfiltration         | ManifestSync.ps1 uploads ZIP archives      | T1041                | Exfiltration over C2 channel                    |
-| Command & Control    | Havoc C2 → login.cargo-review.com          | T1071.001            | Encrypted web-based C2                          |
+| Command & Control    | Havoc C2 -> login.cargo-review.com          | T1071.001            | Encrypted web-based C2                          |
 
 ## Conclusion
 
