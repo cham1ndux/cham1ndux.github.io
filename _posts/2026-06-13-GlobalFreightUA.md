@@ -16,7 +16,7 @@ image:
 
 This lab is modeled on tradecraft associated with APT28, the Russian GRU-linked espionage group commonly tracked as Fancy Bear / Unit 26165. The closest public analog is CISA’s May 21, 2025 advisory on Russian GRU targeting of Western logistics entities and technology companies supporting Ukraine.
 
-- https://www.cisa.gov/news-events/cybersecurity-advisories/aa25-141a
+- [https://www.cisa.gov/news-events/cybersecurity-advisories/aa25-141a](https://www.cisa.gov/news-events/cybersecurity-advisories/aa25-141a)
 
 ## CONTRIBUTORS:
 - Adversarial Emulator Team: [@ZephrFish](https://www.linkedin.com/in/norecruiters/)
