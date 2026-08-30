@@ -1,6 +1,6 @@
 ---
-title: Anatomy of SystemOptimizer a BYOVD EDR-killer with a UAC bypass and a lying comment block
-date: 2026-08-31 00:00:00
+title: "Anatomy of SystemOptimizer - A BYOVD EDR Killer with a UAC Bypass"
+date: 2026-08-30 20:00:00 +0530
 categories: [DFIR]
 tags: [dfir]
 pin: false
@@ -8,8 +8,7 @@ math: true
 mermaid: true
 image:
   path: /assets/img/byod.png
-  lqip:
-  alt: Anatomy of SystemOptimizer a BYOVD EDR-killer with a UAC bypass and a lying comment block
+  alt: Anatomy of SystemOptimizer
 ---
 
 In this walkthrough, I analyze a Windows x64 executable named `SystemOptimizer.exe`. What initially appears to be a relatively small Windows executable turns out to contain an interesting multi-stage defense-evasion mechanism involving PowerShell, a UAC bypass, an embedded kernel driver, and a large list of security products targeted for termination.
