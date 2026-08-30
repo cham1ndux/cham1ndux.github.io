@@ -129,7 +129,7 @@ These APIs indicate that the sample also performs HTTP-based network communicati
 
 At this stage, the combination of:
 
-<img src="/assets/img/proc.jpg" alt="" />
+<img src="/assets/img/proc.png" alt="" />
 
 was already a strong indication that the executable extracts a kernel driver, loads it through the Service Control Manager, and then uses that driver to interact with running processes.
 
@@ -528,7 +528,7 @@ After the UAC bypass finishes, the temporary C# source file and DLL are deleted.
 
 This creates another unusual execution relationship:
 
-<img src="/assets/img/byd.jpg" alt="" />
+<img src="/assets/img/ss.png" alt="" />
 
 The PowerShell also contains a CPU-intensive loop involving mathematical operations such as:
 
