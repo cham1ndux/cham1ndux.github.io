@@ -1062,7 +1062,7 @@ But reversing the sub-command 8 handler revealed something more interesting.
 
 The handler first retrieves the PID:
 
-```asm
+```
 mov ecx, [rsi+4]
 ```
 
