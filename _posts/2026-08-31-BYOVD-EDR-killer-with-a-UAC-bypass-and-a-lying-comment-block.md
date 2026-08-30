@@ -1,8 +1,8 @@
 ---
 title: Anatomy of SystemOptimizer a BYOVD EDR-killer with a UAC bypass and a lying comment block
 date: 2026-08-31 00:00:00
-categories: [Reverse Engineering]
-tags: [RE]
+categories: [DFIR]
+tags: [dfir]
 pin: false
 math: true
 mermaid: true
