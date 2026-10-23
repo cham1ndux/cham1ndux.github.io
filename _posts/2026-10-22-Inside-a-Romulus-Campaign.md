@@ -379,7 +379,6 @@ The main routine passed this configuration to `FUN_14000a960`
 
 <img src="/assets/img/cl11.png" alt="" />
 
-The main routine passed this configuration to `FUN_14000a960`
 
 ## Identifying the AES-256-CBC Decryption Routine
 
@@ -510,7 +509,7 @@ When a hash matched, it retrieved the corresponding function address.
 
 Through this mechanism, the loader resolved APIs including:
 
-<img src="/assets/img/cl14png.png" alt="" />.
+<img src="/assets/img/cl14png.png" alt="" />
 
 This explained why the import table did not reveal the full functionality of the executable.
 
@@ -518,7 +517,7 @@ This explained why the import table did not reveal the full functionality of the
 
 Another interesting part of the loader was its syscall implementation.
 
-<img src="/assets/img/cl15.png" alt="" />.
+<img src="/assets/img/cl15.png" alt="" />
 
 The code examined syscall stubs inside ntdll.dll.
 
@@ -563,7 +562,7 @@ Memory telemetry, thread behavior, and syscall-related execution patterns become
 
 After reproducing the first AES decryption layer, I obtained a 541332 byte payload.
 
-<img src="/assets/img/cl16.png" alt="" />.
+<img src="/assets/img/cl16.png" alt="" />
 
 The first bytes were:
 
@@ -679,9 +678,9 @@ The primary sequence was:
 
 <img src="/assets/img/c222.jpg" alt="" />
 
-The first important function I identified was `c2_checkin_nfront();`, which prepared information about the infected machine and communicated with the Command and Control (C2) server to retrieve additional tasks. 
+The first important function I identified was `c2_checkin_nfront();`, which prepared information about the infected machine and communicated with the C2 server to retrieve additional tasks. 
 
-he next function, `stage_payload_hollow_csc();`, handled an additional payload delivered through the C2 response and contained functionality associated with browser credential theft. After examining this function, I identified `get_bot_id_hex();`, which generated a unique identifier for the infected machine. 
+The next function, `stage_payload_hollow_csc();`, handled an additional payload delivered through the C2 response and contained functionality associated with browser credential theft. After examining this function, I identified `get_bot_id_hex();`, which generated a unique identifier for the infected machine. 
 
 The malware then used `task_dispatcher();` to process and execute the tasks received from the C2 server. 
 
@@ -784,7 +783,7 @@ I then followed `build_checkin_json` to understand exactly what information the 
 
 Interestingly, during my analysis, I discovered that the malware also obfuscated the JSON field names to make the C2 communication structure more difficult to understand. 
 
-The executable contained an encrypted string table with a total size of `0x372` bytes, which was decrypted using the RC4 algorithm with a key stored at memory address 0x14006f888. After identifying the decryption routine and recovering the contents of this table, 
+The executable contained an encrypted string table with a total size of `0x372` bytes, which was decrypted using the RC4 algorithm with a key stored at memory address `0x14006f888`. After identifying the decryption routine and recovering the contents of this table, 
 
 I extracted `98` hexadecimal-looking tokens that were used as JSON field names. This indicated that the malware not only encrypted the data transmitted to the C2 server but also attempted to conceal the structure and meaning of the JSON fields, adding another layer of obfuscation to complicate malware analysis and network traffic inspection.
 
@@ -814,9 +813,9 @@ These details confirmed that the C2 protocol supported tracking individual infec
 
 ## Analyzing the Task Dispatcher
 
-After understanding the malware's initial C2 check-in process, I continued my investigation by examining the `task_dispatcher` function, which was responsible for processing tasks received from the command-and-control server. During my analysis, I discovered that the malware created a separate execution thread for each task using the CreateThread Windows API, which was accessed through its dynamically resolved API table. 
+After understanding the malware's initial C2 check-in process, I continued my investigation by examining the `task_dispatcher` function, which was responsible for processing tasks received from the command-and-control server. During my analysis, I discovered that the malware created a separate execution thread for each task using the `CreateThread` Windows API, which was accessed through its dynamically resolved API table. 
 
-Once the tasks were dispatched, the malware waited for their execution to complete and collected the corresponding return statuses. Further examination revealed that the actual execution logic was handled by another function, task_execute, which I investigated to understand how the malware interpreted and executed the commands received from the C2 server.
+Once the tasks were dispatched, the malware waited for their execution to complete and collected the corresponding return statuses. Further examination revealed that the actual execution logic was handled by another function, `task_execute`, which I investigated to understand how the malware interpreted and executed the commands received from the C2 server.
 
 <img src="/assets/img/cl26.png" alt="" />
 
