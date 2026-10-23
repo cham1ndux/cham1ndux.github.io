@@ -1,5 +1,5 @@
 ---
-title: "Inside a ROMULUS Campaign: How an MSI Drops a New LegionLoader Build"
+title: "Inside a Romulus Campaign - How an MSI Drops a New LegionLoader Build"
 date: 2026-10-22 20:00:00 +0530
 categories: [Malware Analysis]
 tags: [Malware Analysis]
