@@ -312,7 +312,7 @@ Further inspection of the PE structure revealed that the executable contained se
 
 One thing that stood out was the section-size distribution.
 
-The .text section contained approximately 46 KB of executable code, while the `.rdata` and `.rsrc` sections together accounted for almost 1 MB.
+The `.text` section contained approximately 46 KB of executable code, while the `.rdata` and `.rsrc` sections together accounted for almost 1 MB.
 
 This suggested that the executable might be carrying a large amount of embedded data.
 
