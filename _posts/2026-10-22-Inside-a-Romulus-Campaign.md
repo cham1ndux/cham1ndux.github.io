@@ -974,25 +974,37 @@ Despite their `.png` extensions, these filenames were used in the malware's cred
 
 ## Final thoughts
 
-This investigation started with a single SOC alert showing a user-associated process executing curl.exe to download an MSI file.
+What initially looked like a simple suspicious `curl.exe` command turned into a much more interesting malware investigation than I expected.
 
-Initially, it looked like a suspicious software download.
+The investigation started with an MSI download from a decimal-encoded IP address. After decoding the address, I identified the actual destination and discovered a ROMULUS-branded login portal hosted on the same infrastructure. Although I couldn't confirm the portal's exact role in the operation, it was an interesting finding that added another piece to the investigation.
 
-But by following the related PowerShell activity, inspecting the MSI database, extracting its embedded streams, and reversing the recovered executable, I was able to trace a much more complex execution chain.
+The real challenge began when I started examining the MSI file itself.
 
-The MSI contained obfuscated PowerShell loaders and an encoded native PE. That PE contained an AES-encrypted shellcode stage, which in turn decrypted another executable.
+Instead of containing a straightforward installer, the MSI contained multiple embedded streams that were used to hide obfuscated PowerShell scripts and an encoded Windows executable. By extracting and decoding these components, I recovered a native binary identified by public threat intelligence platforms as LegionLoader.
 
-The final payload contained functionality for Chrome credential theft, host reconnaissance, process injection, persistence, AMSI interference, and communication with an RC4-protected C2 configuration.
+From there, the investigation moved into Ghidra, where I spent most of my time understanding how the loader worked internally.
 
-The most important part of this investigation was not any single tool or decoding script. It was following the evidence from one stage to the next.
+One of the most interesting parts was discovering how the malware combined multiple techniques to make analysis more difficult. `AES-256-CBC` encryption, byte reversal, API hashing, indirect syscalls, and thread-pool-based execution were all used across different stages. Recovering one payload didn't mean the analysis was finished. Each decoded stage revealed another layer that needed to be understood.
 
-Every time I recovered a new payload, I checked what it was, how it was decoded, and what it attempted to execute.
+Eventually, I recovered the final executable and found that its functionality extended far beyond loading another payload.
 
-For me, this case is a good example of why SOC investigation should not stop at the initial alert. A command that looks like a simple download can be the entry point to a much larger malware execution chain.
+The malware contained a modular command-and-control framework, multiple process-injection methods, persistence mechanisms, PowerShell execution capabilities, and routines designed to access Chrome-protected credential material. I also identified encrypted configuration data and recovered the C2 domain and communication endpoints.
 
-The recovered code establishes substantial malicious functionality, but the exact impact on the affected endpoint still depends on runtime evidence, including process execution, credential access, persistence, and network telemetry.
+One detail that stood out to me was the malware's use of the legitimate Microsoft C# compiler, csc.exe, as a host process for transacted process hollowing. At first, I suspected that the malware might be compiling additional code. However, following the relevant functions revealed that the executable was being used to host another payload rather than perform ordinary compilation.
 
-That distinction is important when turning reverse-engineering findings into an incident report.
+This was a good reminder of why I shouldn't make assumptions based only on process names, imported APIs, or individual suspicious strings. Understanding the actual execution flow is much more important.
+
+Another important lesson from this investigation was the value of connecting SOC monitoring with reverse engineering.
+
+The initial alert only showed suspicious command-line activity. It didn't explain the embedded MSI payloads, the encryption routines, the shellcode execution chain, or the capabilities of the final executable. Those details became visible only after I moved beyond the initial detection and started examining the malware at each stage.
+
+It's also important to distinguish between what the malware was capable of doing and what was confirmed to have happened on the affected endpoint. Static analysis revealed credential-access, persistence, injection, and C2 functionality, but those capabilities alone don't prove that every function was executed during the observed incident.
+
+For me, the biggest takeaway from this investigation is that even a relatively simple SOC alert can lead to a complex malware execution chain. A single command line may be only the first visible part of a much larger operation.
+
+This analysis helped me better understand LegionLoader's execution techniques, the challenges of analyzing multi-stage encrypted payloads, and the importance of following the evidence rather than stopping at the initial malware identification.
+
+Identifying the malware family was only the beginning. Understanding how each stage worked, what it attempted to hide, and what the final payload was capable of doing was the real investigation.
 
 ## IOC
 
